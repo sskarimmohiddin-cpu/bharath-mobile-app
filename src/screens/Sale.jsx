@@ -99,12 +99,12 @@ const Sale = ({ sales, saleForm, setSaleForm, saveSale, fetchAll, stock, vendors
           value={saleForm.itemName}
           onChange={e => { setSaleForm({ ...saleForm, itemName: e.target.value }); setShowSuggestions(true); }}
           onFocus={() => setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 500)}
           style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
         {showSuggestions && suggestions.length > 0 && (
           <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
             {suggestions.map((item, i) => (
-              <div key={i} onClick={() => {
+              <div key={i} onMouseDown={() => {
                 setSaleForm({ ...saleForm, itemName: item.item_name, price: String(item.rate) });
                 setShowSuggestions(false);
               }}

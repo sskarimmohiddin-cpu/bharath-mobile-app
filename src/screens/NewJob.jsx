@@ -33,7 +33,7 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         {form.complaint && form.complaint.length > 1 && (
           <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
             {[...new Set(jobs.filter(j => j.complaint && j.complaint.toLowerCase().includes(form.complaint.toLowerCase()) && j.complaint !== form.complaint).map(j => j.complaint))].slice(0, 6).map((suggestion, i) => (
-              <div key={i} onClick={() => setForm({ ...form, complaint: suggestion })}
+              <div key={i} onMouseDown={() => setForm({ ...form, complaint: suggestion })}
                 style={{ padding: '10px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', fontSize: 13, color: '#333' }}>
                 {suggestion}
               </div>

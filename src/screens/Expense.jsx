@@ -29,12 +29,12 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
           value={expenseForm.description}
           onChange={e => { setExpenseForm({ ...expenseForm, description: e.target.value }); setShowSuggestions(true); }}
           onFocus={() => setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 500)}
           style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
         {showSuggestions && expenseForm.description && expenseForm.description.length > 0 && suggestions.length > 0 && (
           <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
             {suggestions.map((s, i) => (
-              <div key={i} onClick={() => { setExpenseForm({ ...expenseForm, description: s }); setShowSuggestions(false); }}
+              <div key={i} onMouseDown={() => { setExpenseForm({ ...expenseForm, description: s }); setShowSuggestions(false); }}
                 style={{ padding: '10px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', fontSize: 13, color: '#333' }}>
                 {s}
               </div>
