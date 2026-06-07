@@ -4,10 +4,24 @@ import JobCard from '../components/JobCard';
 const Pending = ({ jobs, jobParts, onEditJob, onDeleteJob, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance }) => {
   const pendingJobs = jobs.filter(j => j.status === 'Pending' || j.status === 'Partial');
 
+  const [search, setSearch] = React.useState('');
+  const filteredPending = pendingJobs.filter(j =>
+    search === '' ||
+    (j.customer_name && j.customer_name.toLowerCase().includes(search.toLowerCase())) ||
+    (j.device_model && j.device_model.toLowerCase().includes(search.toLowerCase())) ||
+    (j.job_id && j.job_id.toLowerCase().includes(search.toLowerCase()))
+  );
   return (
     <div style={{ padding: 20 }}>
       <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 6 }}>Pending Jobs</div>
-      <div style={{ fontSize: 13, color: '#999', marginBottom: 16 }}>{pendingJobs.length} jobs pending</div>
+      <div style={{ fontSize: 13, color: '#999', marginBottom: 10 }}>{pendingJobs.length} jobs pending</div>
+      <input
+        type='text'
+        placeholder='🔍 Search by name, model, job ID...'
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box', marginBottom: 16 }}
+      />
 
       {pendingJobs.length === 0 && (
         <div style={{ textAlign: 'center', padding: 40, background: 'white', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
@@ -18,7 +32,7 @@ const Pending = ({ jobs, jobParts, onEditJob, onDeleteJob, onMarkDelivered, onCo
       )}
 
       {/* PARTIAL PAYMENT JOBS */}
-      {pendingJobs.filter(j => j.status === 'Partial').length > 0 && (
+      {filteredPending.filter(j => j.status === 'Partial').length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 'bold', color: '#e65100', marginBottom: 8, background: '#fff3e0', padding: '6px 12px', borderRadius: 8 }}>
             💰 Partial Payment — Balance Pending ({pendingJobs.filter(j => j.status === 'Partial').length} jobs)
