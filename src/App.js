@@ -37,7 +37,8 @@ function App() {
   const [form, setForm] = useState({
     customerName: '', phone: '', deviceModel: '', complaint: '',
     price: '', deliveryDate: '', deliveryTime: '', advancePayment: '',
-    jobDate: '', editId: null, editJobId: null,
+    jobDate: '', devicePassword: '', photoUrl: '',
+    editId: null, editJobId: null,
   });
   const [purchaseForm, setPurchaseForm] = useState({
     vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '',
@@ -141,6 +142,8 @@ function App() {
         balance: Number(form.price) - (Number(form.advancePayment) || 0),
         created_at: form.jobDate ? new Date(form.jobDate).toISOString() : new Date().toISOString(),
         advance_date: Number(form.advancePayment) > 0 ? new Date().toISOString().split('T')[0] : null,
+        device_password: form.devicePassword || null,
+        photo_url: form.photoUrl || null,
       }]));
     }
     if (error) { setLoading(false); alert('Error: ' + error.message); return; }
@@ -188,7 +191,7 @@ function App() {
       a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
-    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', editId: null, editJobId: null });
+    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', editId: null, editJobId: null });
     setSelectedParts([]); setNewParts([]);
     fetchAll(); setScreen('home');
   };
