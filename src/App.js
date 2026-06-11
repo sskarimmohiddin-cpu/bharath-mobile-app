@@ -129,7 +129,25 @@ function App() {
     const salePurchaseCost = sales.filter(s => s.created_at && toIST(s.created_at) === date).reduce((sum, s) => sum + (Number(s.purchase_cost || 0) * Number(s.quantity || 1)), 0);
     const netProfit = Math.round((collected + daySales - partsCost - salePurchaseCost) * 100) / 100;
     const { data: dcData } = await supabase.from('daily_cash').select('*').eq('date', date);
-    const opening = dcData && dcData.length > 0 ? dcData[0].opening_balance || 0 : 0;
+    let opening = 0;
+    if (dcData && dcData.length > 0) {
+      opening = dcData[0].opening_balance || 0;
+    } else {
+      const prevDate = new Date(date);
+      prevDate.setDate(prevDate.getDate() - 1);
+      const prevDateStr = prevDate.toISOString().split('T')[0];
+      const { data: prevDc } = await supabase.from('daily_cash').select('*').eq('date', prevDateStr);
+      if (prevDc && prevDc.length > 0) {
+        const prevOpening = prevDc[0].opening_balance || 0;
+        const prevCollected = jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === prevDateStr).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
+        const prevAdvances = jobs.filter(j => j.advance_date === prevDateStr).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
+        const prevSales = sales.filter(s => s.created_at && toIST(s.created_at) === prevDateStr).reduce((s, j) => s + Number(j.total || 0), 0);
+        const prevExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === prevDateStr).reduce((s, e) => s + Number(e.amount || 0), 0);
+        const prevCashPurchases = purchases.filter(p => p.payment_type === 'Cash' && (p.purchase_date || (p.created_at ? toIST(p.created_at) : null)) === prevDateStr).reduce((s, p) => s + Number(p.total || 0), 0);
+        const prevVP = vendorPayments.filter(vp => vp.created_at && toIST(vp.created_at) === prevDateStr).reduce((s, vp) => s + Number(vp.amount || 0), 0);
+        opening = prevOpening + prevCollected + prevAdvances + prevSales - prevExpenses - prevCashPurchases - prevVP;
+      }
+    }
     return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening };
   };
 
