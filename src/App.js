@@ -104,7 +104,17 @@ function App() {
   };
 
   const saveOpeningCash = async (amount) => {
-    const getDayData = (date) => {
+    const todayDate = new Date().toISOString().split('T')[0];
+    const { data } = await supabase.from('daily_cash').select('*').eq('date', todayDate);
+    if (data && data.length > 0) {
+      await supabase.from('daily_cash').update({ opening_balance: amount }).eq('date', todayDate);
+    } else {
+      await supabase.from('daily_cash').insert([{ date: todayDate, opening_balance: amount }]);
+    }
+    setOpeningCash(amount);
+  };
+
+  const getDayData = (date) => {
     const istOffset = 5.5 * 60 * 60000;
     const toIST = (ts) => new Date(new Date(ts).getTime() + istOffset).toISOString().split('T')[0];
     const collected = jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
@@ -119,15 +129,6 @@ function App() {
     const salePurchaseCost = sales.filter(s => s.created_at && toIST(s.created_at) === date).reduce((sum, s) => sum + (Number(s.purchase_cost || 0) * Number(s.quantity || 1)), 0);
     const netProfit = Math.round((collected + daySales - partsCost - salePurchaseCost) * 100) / 100;
     return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening: 0 };
-  };
-    const todayDate = new Date().toISOString().split('T')[0];
-    const { data } = await supabase.from('daily_cash').select('*').eq('date', todayDate);
-    if (data && data.length > 0) {
-      await supabase.from('daily_cash').update({ opening_balance: amount }).eq('date', todayDate);
-    } else {
-      await supabase.from('daily_cash').insert([{ date: todayDate, opening_balance: amount }]);
-    }
-    setOpeningCash(amount);
   };
 
   const handleSave = async () => {

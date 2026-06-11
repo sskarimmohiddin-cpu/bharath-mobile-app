@@ -17,13 +17,12 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
             {dashDate === today ? 'Today Summary' : 'Summary — ' + dashDate}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, color: '#999' }}>📅</span>
             <input type='date' value={dashDate} max={today}
-              onChange={e => setDashDate(e.target.value)}
-              style={{ border: '1px solid #ddd', borderRadius: 6, padding: '2px 6px', fontSize: 12, color: '#333', background: dashDate !== today ? '#fff8e1' : 'white' }} />
+              onChange={e => { if(e.target.value) setDashDate(e.target.value); }}
+              style={{ border: '1px solid #1a73e8', borderRadius: 6, padding: '4px 8px', fontSize: 13, color: '#1a73e8', background: dashDate !== today ? '#fff8e1' : 'white', fontWeight: 'bold', minWidth: 130 }} />
             {dashDate !== today && (
               <button onClick={() => setDashDate(today)}
-                style={{ fontSize: 11, background: '#1a73e8', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>
+                style={{ fontSize: 12, background: '#1a73e8', color: 'white', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                 Today
               </button>
             )}
