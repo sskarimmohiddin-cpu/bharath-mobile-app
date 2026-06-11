@@ -5,17 +5,26 @@ import JobCard from '../components/JobCard';
 const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, dashDate, setDashDate, getDayData }) => {
   const [showBillWise, setShowBillWise] = React.useState(false);
   const [dayData, setDayData] = React.useState(null);
+  const [dayDataLoading, setDayDataLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (dashDate !== today) {
-      getDayData(dashDate).then(d => setDayData(d));
+      setDayDataLoading(true);
+      setDayData(null);
+      getDayData(dashDate).then(d => {
+        setDayData(d);
+        setDayDataLoading(false);
+      });
     } else {
       setDayData(null);
+      setDayDataLoading(false);
     }
-  }, [dashDate]);
+  }, [dashDate, today]);
+
   const [billWiseDate, setBillWiseDate] = React.useState(today);
   const [showRecentJobs, setShowRecentJobs] = React.useState(false);
   const [showTransactions, setShowTransactions] = React.useState(false);
+
   return (
     <div style={{ padding: 20 }}>
 
@@ -37,8 +46,12 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
             )}
           </div>
         </div>
-        
-        {(() => {
+
+        {dashDate !== today && dayDataLoading && (
+          <div style={{ textAlign: 'center', padding: 20, color: '#999' }}>Loading...</div>
+        )}
+
+        {!(dashDate !== today && dayDataLoading) && (() => {
           const d = dashDate === today ? {
             collected: todayCollected, advances: todayAdvances, sales: todaySales,
             cashPurchases: todayCashPurchases, purchases: todayPurchases,
@@ -47,6 +60,27 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
           } : (dayData || { collected:0, advances:0, sales:0, cashPurchases:0, purchases:0, partsCost:0, vendorPayments:0, expenses:0, netProfit:0, opening:0 });
           return (
             <>
+              {/* Opening Cash */}
+              {dashDate === today ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, color: '#555' }}>Opening Cash</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{openingCash}</div>
+                    <button onClick={() => {
+                      const amount = prompt('Enter opening cash balance for today:');
+                      if (amount !== null) saveOpeningCash(Number(amount) || 0);
+                    }} style={{ background: '#e8f1fd', color: '#1a73e8', border: '1px solid #1a73e8', borderRadius: 6, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}>
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ) : d.opening > 0 ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, color: '#555' }}>Opening Cash</div>
+                  <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{d.opening}</div>
+                </div>
+              ) : null}
+
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ fontSize: 13, color: '#555' }}>Repair Collected</div>
                 <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{d.collected}</div>
@@ -55,20 +89,7 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ fontSize: 13, color: '#555' }}>Advance Received</div>
                   <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{d.advances}</div>
-                </div>{dashDate === today ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ fontSize: 13, color: '#555' }}>Opening Cash</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{openingCash}</div>
-              <button onClick={() => {
-                const amount = prompt('Enter opening cash balance for today:');
-                if (amount !== null) saveOpeningCash(Number(amount) || 0);
-              }} style={{ background: '#e8f1fd', color: '#1a73e8', border: '1px solid #1a73e8', borderRadius: 6, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}>
-                Edit
-              </button>
-            </div>
-          </div>
-        ) : null}
+                </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ fontSize: 13, color: '#555' }}>Accessories Sales</div>
