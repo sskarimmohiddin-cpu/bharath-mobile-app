@@ -168,6 +168,21 @@ function App() {
         balance: Number(form.price) - (Number(form.advancePayment) || 0),
         status: Number(form.advancePayment) > 0 ? 'Partial' : 'Pending',
       }).eq('id', form.editId));
+      const { data: oldParts } = await supabase.from('job_parts').select('*').eq('job_id', jobId);
+      if (oldParts && oldParts.length > 0) {
+        const { data: oldPurchases } = await supabase.from('purchases').select('*').eq('job_id', jobId);
+        if (oldPurchases && oldPurchases.length > 0) {
+          for (const op of oldPurchases) {
+            if (op.payment_type === 'Credit') {
+              const vendor = vendors.find(v => v.id === op.vendor_id);
+              if (vendor) {
+                await supabase.from('vendors').update({ balance: vendor.balance - op.total }).eq('id', vendor.id);
+              }
+            }
+            await supabase.from('purchases').delete().eq('id', op.id);
+          }
+        }
+      }
       await supabase.from('job_parts').delete().eq('job_id', jobId);
     } else {
       jobId = 'BMS-' + Date.now().toString().slice(-4);
@@ -209,6 +224,7 @@ function App() {
         item_name: part.itemName, quantity: Number(part.quantity),
         rate: Number(part.rate), total: total, payment_type: part.paymentType,
         purchase_date: new Date().toISOString().split('T')[0],
+        job_id: jobId,
       }]);
       if (part.paymentType === 'Credit') {
         await supabase.from('vendors').update({ balance: vendor.balance + total }).eq('id', vendor.id);
