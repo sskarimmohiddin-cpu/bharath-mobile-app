@@ -38,7 +38,7 @@ function App() {
   const [form, setForm] = useState({
     customerName: '', phone: '', deviceModel: '', complaint: '',
     price: '', deliveryDate: '', deliveryTime: '', advancePayment: '',
-    jobDate: '', devicePassword: '', photoUrl: '',
+    jobDate: '', devicePassword: '', photoUrl: '', cashSale: false,
     editId: null, editJobId: null,
   });
   const [purchaseForm, setPurchaseForm] = useState({
@@ -186,14 +186,16 @@ function App() {
       await supabase.from('job_parts').delete().eq('job_id', jobId);
     } else {
       jobId = 'BMS-' + Date.now().toString().slice(-4);
+      const isCashSale = form.cashSale;
+      const jobDate = form.jobDate ? new Date(form.jobDate).toISOString().split('T')[0] : today;
       ({ error } = await supabase.from('jobs').insert([{
         job_id: jobId, customer_name: form.customerName, phone: form.phone,
         device_model: form.deviceModel, complaint: form.complaint,
-        price: Number(form.price), delivery_date: form.deliveryDate,
+        price: Number(form.price), delivery_date: isCashSale ? jobDate : form.deliveryDate,
         delivery_time: form.deliveryTime,
-        status: Number(form.advancePayment) > 0 ? 'Partial' : 'Pending',
-        amount_paid: Number(form.advancePayment) || 0,
-        balance: Number(form.price) - (Number(form.advancePayment) || 0),
+        status: isCashSale ? 'Delivered' : (Number(form.advancePayment) > 0 ? 'Partial' : 'Pending'),
+        amount_paid: isCashSale ? Number(form.price) : (Number(form.advancePayment) || 0),
+        balance: isCashSale ? 0 : (Number(form.price) - (Number(form.advancePayment) || 0)),
         created_at: form.jobDate ? new Date(form.jobDate).toISOString() : new Date().toISOString(),
         advance_date: Number(form.advancePayment) > 0 ? new Date().toISOString().split('T')[0] : null,
         device_password: form.devicePassword || null,
@@ -246,7 +248,7 @@ function App() {
       a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
-    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', editId: null, editJobId: null });
+    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', cashSale: false, editId: null, editJobId: null });
     setSelectedParts([]); setNewParts([]);
     fetchAll(); setScreen('home');
   };

@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedParts, setSelectedParts, newParts, setNewParts, newPartForm, setNewPartForm, fetchAll, jobs, purchases }) => {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
   const handlePhotoCapture = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -41,6 +42,7 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
     <div style={{ padding: 20 }}>
       <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>{form.editId ? 'Edit Job' : 'New Repair Job'}</div>
 
+      {/* BASIC FIELDS */}
       {[
         { label: 'Customer Name', name: 'customerName', placeholder: 'Enter name' },
         { label: 'Phone Number *', name: 'phone', placeholder: '9876543210', type: 'tel' },
@@ -50,14 +52,30 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         { label: 'Delivery Date', name: 'deliveryDate', type: 'date' },
         { label: 'Delivery Time (optional)', name: 'deliveryTime', type: 'time' },
         { label: 'Advance Payment (optional)', name: 'advancePayment', placeholder: '0', type: 'number' },
-{ label: 'Device Password (optional)', name: 'devicePassword', placeholder: 'PIN or pattern', type: 'text' },
+        { label: 'Device Password (optional)', name: 'devicePassword', placeholder: 'PIN or pattern', type: 'text' },
       ].map(field => (
         <div key={field.name} style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>{field.label}</div>
           <input name={field.name} type={field.type || 'text'} placeholder={field.placeholder} value={form[field.name] || ''} onChange={handleChange}
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
         </div>
-      ))}{/* PHOTO CAPTURE */}
+      ))}
+
+      {/* CASH SALE TOGGLE */}
+      <div style={{ marginBottom: 16, background: form.cashSale ? '#e8f5e9' : 'white', borderRadius: 10, padding: 12, border: '2px solid ' + (form.cashSale ? '#2e7d32' : '#ddd') }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: form.cashSale ? '#2e7d32' : '#333' }}>💵 Cash Sale</div>
+            <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>Customer waiting — direct delivery</div>
+          </div>
+          <button onClick={() => setForm({ ...form, cashSale: !form.cashSale })}
+            style={{ background: form.cashSale ? '#2e7d32' : '#ddd', color: 'white', border: 'none', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 'bold', cursor: 'pointer' }}>
+            {form.cashSale ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      </div>
+
+      {/* PHOTO CAPTURE */}
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Device Photo (optional)</div>
         <input type='file' accept='image/*' capture='environment' onChange={handlePhotoCapture}
@@ -73,9 +91,10 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         )}
       </div>
 
-<div style={{ marginBottom: 16, position: 'relative' }}>
+      {/* COMPLAINT */}
+      <div style={{ marginBottom: 16, position: 'relative' }}>
         <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Complaint / Service / Software *</div>
-        <textarea name="complaint" placeholder="e.g. Display replacement, Software flash, Network IC..." value={form.complaint} onChange={handleChange} rows={3}
+        <textarea name="complaint" placeholder="e.g. Display replacement, Software flash, Network IC..." value={form.complaint || ''} onChange={handleChange} rows={3}
           style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box', resize: 'none' }} />
         {form.complaint && form.complaint.length > 1 && (
           <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
@@ -126,7 +145,7 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
           <div style={{ fontSize: 12, color: '#999' }}>No stock available.</div>
         )}
         {stock.filter(s => s.quantity > 0).map((item, i) => {
-          const selected = selectedParts.find(p => p.item_name === item.item_name);
+          const selected = selectedParts.find(p => p.item_name === item.item_name && !p.isExisting);
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: selected ? '#e8f5e9' : 'white', borderRadius: 8, padding: '8px 12px', marginBottom: 8, border: '1px solid ' + (selected ? '#2e7d32' : '#ddd') }}>
               <div>
@@ -137,13 +156,13 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
                 {selected ? (
                   <>
                     <button onClick={() => {
-                      if (selected.quantity <= 1) setSelectedParts(selectedParts.filter(p => p.item_name !== item.item_name));
-                      else setSelectedParts(selectedParts.map(p => p.item_name === item.item_name ? { ...p, quantity: p.quantity - 1 } : p));
+                      if (selected.quantity <= 1) setSelectedParts(selectedParts.filter(p => !(p.item_name === item.item_name && !p.isExisting)));
+                      else setSelectedParts(selectedParts.map(p => (p.item_name === item.item_name && !p.isExisting) ? { ...p, quantity: p.quantity - 1 } : p));
                     }} style={{ width: 28, height: 28, borderRadius: 14, border: 'none', background: '#c62828', color: 'white', fontSize: 16, cursor: 'pointer' }}>-</button>
                     <span style={{ fontWeight: 'bold', minWidth: 20, textAlign: 'center' }}>{selected.quantity}</span>
                     <button onClick={() => {
                       if (selected.quantity >= item.quantity) { alert('Not enough stock!'); return; }
-                      setSelectedParts(selectedParts.map(p => p.item_name === item.item_name ? { ...p, quantity: p.quantity + 1 } : p));
+                      setSelectedParts(selectedParts.map(p => (p.item_name === item.item_name && !p.isExisting) ? { ...p, quantity: p.quantity + 1 } : p));
                     }} style={{ width: 28, height: 28, borderRadius: 14, border: 'none', background: '#2e7d32', color: 'white', fontSize: 16, cursor: 'pointer' }}>+</button>
                   </>
                 ) : (
@@ -178,19 +197,19 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>Vendor</div>
             <select value={newPartForm.vendorId} onChange={async e => {
-                  if (e.target.value === 'new') {
-                    const name = prompt('Enter new vendor name:');
-                    if (!name) return;
-                    const phone = prompt('Enter vendor phone (optional):') || '';
-                    const { data } = await supabase.from('vendors').insert([{ name, phone, balance: 0 }]).select();
-                    if (data && data[0]) {
-                      await fetchAll();
-                      setNewPartForm({ ...newPartForm, vendorId: String(data[0].id) });
-                    }
-                  } else {
-                    setNewPartForm({ ...newPartForm, vendorId: e.target.value });
-                  }
-                }}
+              if (e.target.value === 'new') {
+                const name = prompt('Enter new vendor name:');
+                if (!name) return;
+                const phone = prompt('Enter vendor phone (optional):') || '';
+                const { data } = await supabase.from('vendors').insert([{ name, phone, balance: 0 }]).select();
+                if (data && data[0]) {
+                  await fetchAll();
+                  setNewPartForm({ ...newPartForm, vendorId: String(data[0].id) });
+                }
+              } else {
+                setNewPartForm({ ...newPartForm, vendorId: e.target.value });
+              }
+            }}
               style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }}>
               <option value=''>Select vendor...</option>
               <option value='new'>+ Add New Vendor</option>
@@ -198,39 +217,39 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
             </select>
           </div>
           <div style={{ marginBottom: 8, position: 'relative' }}>
-              <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>Item / Service / Software Name</div>
-              <input type='text' placeholder='e.g. LCD, Software flash, IC' value={newPartForm.itemName}
-                onChange={e => setNewPartForm({ ...newPartForm, itemName: e.target.value })}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }} />
-              {newPartForm.itemName && newPartForm.itemName.length > 1 && (
-                <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 180, overflowY: 'auto' }}>
-                  {[...new Set([
-                    ...stock.filter(s => s.item_name.toLowerCase().includes(newPartForm.itemName.toLowerCase())).map(s => s.item_name),
-                    ...purchases.filter(p => p.item_name.toLowerCase().includes(newPartForm.itemName.toLowerCase())).map(p => p.item_name),
-                  ])].slice(0, 6).map((name, i) => {
-                    const item = stock.find(s => s.item_name === name) || purchases.find(p => p.item_name === name);
-                    return (
-                      <div key={i} onClick={() => setNewPartForm({ ...newPartForm, itemName: name, rate: String(item ? item.rate : '') })}
-                        style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }}>
-                        <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333' }}>{name}</div>
-                        {item && <div style={{ fontSize: 11, color: '#666' }}>Rs.{item.rate}</div>}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            {[
-              { label: 'Quantity', key: 'quantity', placeholder: '1', type: 'number' },
-              { label: 'Rate (Rs.)', key: 'rate', placeholder: '0', type: 'number' },
-            ].map(field => (
-              <div key={field.key} style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{field.label}</div>
-                <input type={field.type || 'text'} placeholder={field.placeholder} value={newPartForm[field.key]}
-                  onChange={e => setNewPartForm({ ...newPartForm, [field.key]: e.target.value })}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }} />
+            <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>Item / Service / Software Name</div>
+            <input type='text' placeholder='e.g. LCD, Software flash, IC' value={newPartForm.itemName}
+              onChange={e => setNewPartForm({ ...newPartForm, itemName: e.target.value })}
+              style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }} />
+            {newPartForm.itemName && newPartForm.itemName.length > 1 && (
+              <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 180, overflowY: 'auto' }}>
+                {[...new Set([
+                  ...stock.filter(s => s.item_name.toLowerCase().includes(newPartForm.itemName.toLowerCase())).map(s => s.item_name),
+                  ...purchases.filter(p => p.item_name.toLowerCase().includes(newPartForm.itemName.toLowerCase())).map(p => p.item_name),
+                ])].slice(0, 6).map((name, i) => {
+                  const item = stock.find(s => s.item_name === name) || purchases.find(p => p.item_name === name);
+                  return (
+                    <div key={i} onClick={() => setNewPartForm({ ...newPartForm, itemName: name, rate: String(item ? item.rate : '') })}
+                      style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }}>
+                      <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333' }}>{name}</div>
+                      {item && <div style={{ fontSize: 11, color: '#666' }}>Rs.{item.rate}</div>}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
+          </div>
+          {[
+            { label: 'Quantity', key: 'quantity', placeholder: '1', type: 'number' },
+            { label: 'Rate (Rs.)', key: 'rate', placeholder: '0', type: 'number' },
+          ].map(field => (
+            <div key={field.key} style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{field.label}</div>
+              <input type={field.type || 'text'} placeholder={field.placeholder} value={newPartForm[field.key]}
+                onChange={e => setNewPartForm({ ...newPartForm, [field.key]: e.target.value })}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }} />
+            </div>
+          ))}
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>Payment Type</div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -264,8 +283,8 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
       </div>
 
       <button onClick={handleSave} disabled={loading}
-        style={{ width: '100%', background: loading ? '#aaa' : '#2e7d32', color: 'white', border: 'none', borderRadius: 12, padding: 16, fontSize: 16, fontWeight: 'bold', cursor: 'pointer' }}>
-        {loading ? 'Saving...' : form.editId ? 'Update Job' : 'Save Job and Send WhatsApp'}
+        style={{ width: '100%', background: loading ? '#aaa' : (form.cashSale ? '#2e7d32' : '#1a73e8'), color: 'white', border: 'none', borderRadius: 12, padding: 16, fontSize: 16, fontWeight: 'bold', cursor: 'pointer' }}>
+        {loading ? 'Saving...' : form.editId ? 'Update Job' : (form.cashSale ? '💵 Save Cash Sale' : 'Save Job and Send WhatsApp')}
       </button>
     </div>
   );
