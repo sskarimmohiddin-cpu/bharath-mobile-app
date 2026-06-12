@@ -2,7 +2,7 @@ import React from 'react';
 // import { fmtDate } from '../utils/format';
 import JobCard from '../components/JobCard';
 
-const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, dashDate, setDashDate, getDayData }) => {
+const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, todaySales, todayExpenses, todayPurchases, todayCashPurchases, todayPartsCost, todayVendorPayments, todayNetProfit, totalCollected, vendorPayable, today, setScreen, fetchAll, onMarkDelivered, onCollectBalance, onMarkReturned, onEditJob, onDeleteJob, onCollectAdvance, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, openingCash, saveOpeningCash, cashInHand, dashDate, setDashDate, getDayData }) => {
   const [showBillWise, setShowBillWise] = React.useState(false);
   const [dayData, setDayData] = React.useState(null);
   const [dayDataLoading, setDayDataLoading] = React.useState(false);
@@ -121,12 +121,18 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
                   Rs.{d.netProfit}
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid #eee' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid #eee', marginBottom: 8 }}>
                 <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333' }}>Closing Cash</div>
                 <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1a73e8' }}>
                   Rs.{d.opening + d.collected + d.advances + d.sales - d.expenses - d.cashPurchases - d.vendorPayments}
                 </div>
               </div>
+              {dashDate === today && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid #eee', background: '#e8f5e9', borderRadius: 8, padding: 10, marginTop: 4 }}>
+                  <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>💵 Cash in Hand</div>
+                  <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{cashInHand}</div>
+                </div>
+              )}
             </>
           );
         })()}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabase';
 
-const Banking = ({ bankAccounts, bankTransactions, fetchAll }) => {
+const Banking = ({ bankAccounts, bankTransactions, fetchAll, cashInHand }) => {
   const [view, setView] = useState('accounts');
   const [showAddAccount, setShowAddAccount] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -123,10 +123,16 @@ const Banking = ({ bankAccounts, bankTransactions, fetchAll }) => {
       {/* ACCOUNTS VIEW */}
       {view === 'accounts' && (
         <div>
-          {/* TOTAL BALANCE */}
-          <div style={{ background: 'linear-gradient(135deg, #1a73e8, #0d47a1)', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 2px 8px rgba(26,115,232,0.3)' }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 4 }}>Total Balance Across All Accounts</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', color: 'white' }}>Rs.{totalBalance}</div>
+          {/* CASH IN HAND + BANK BALANCE */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            <div style={{ flex: 1, background: '#2e7d32', borderRadius: 12, padding: 14, boxShadow: '0 2px 8px rgba(46,125,50,0.3)' }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginBottom: 4 }}>💵 Cash in Hand</div>
+              <div style={{ fontSize: 22, fontWeight: 'bold', color: 'white' }}>Rs.{cashInHand}</div>
+            </div>
+            <div style={{ flex: 1, background: '#1a73e8', borderRadius: 12, padding: 14, boxShadow: '0 2px 8px rgba(26,115,232,0.3)' }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginBottom: 4 }}>🏦 Bank Balance</div>
+              <div style={{ fontSize: 22, fontWeight: 'bold', color: 'white' }}>Rs.{totalBalance}</div>
+            </div>
           </div>
 
           {/* ADD ACCOUNT BUTTON */}

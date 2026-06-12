@@ -494,7 +494,7 @@ function App() {
   }).reduce((s, vp) => s + Number(vp.amount || 0), 0);
   const totalCollected = jobs.filter(j => j.status === 'Delivered' || j.status === 'Partial').reduce((s, j) => s + Number(j.amount_paid || 0), 0);
   const vendorPayable = vendors.reduce((s, v) => s + Number(v.balance || 0), 0);
-  const cashInHand = totalCollected + sales.reduce((s, j) => s + Number(j.total || 0), 0) - vendorPayments.reduce((s, vp) => s + Number(vp.amount || 0), 0) - purchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0) - expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const cashInHand = openingCash + todayCollected + todayAdvances + todaySales - todayExpenses - todayCashPurchases - todayVendorPayments;
 
   const filteredTx = [
     ...jobs.map(j => ({
@@ -578,6 +578,7 @@ function App() {
           filterDateFrom={filterDateFrom} filterDateTo={filterDateTo}
           setFilterDateFrom={setFilterDateFrom} setFilterDateTo={setFilterDateTo}
           openingCash={openingCash} saveOpeningCash={saveOpeningCash}
+          cashInHand={cashInHand}
           dashDate={dashDate} setDashDate={setDashDate} getDayData={getDayData}
           {...commonJobProps}
         />
@@ -650,6 +651,7 @@ function App() {
           bankAccounts={bankAccounts}
           bankTransactions={bankTransactions}
           fetchAll={fetchAll}
+          cashInHand={cashInHand}
         />
       )}
     </div>
