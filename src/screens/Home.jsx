@@ -19,7 +19,7 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
       setDayData(null);
       setDayDataLoading(false);
     }
-  }, [dashDate, today]);
+  }, [dashDate, today, getDayData]);
 
   const [billWiseDate, setBillWiseDate] = React.useState(today);
   const [showRecentJobs, setShowRecentJobs] = React.useState(false);
