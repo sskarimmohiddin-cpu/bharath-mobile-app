@@ -94,7 +94,9 @@ function App() {
         const ydExpenses = e.data ? e.data.filter(exp => exp.created_at && exp.created_at.startsWith(yesterday)).reduce((sum, exp) => sum + Number(exp.amount || 0), 0) : 0;
         const ydCashPurchases = p.data ? p.data.filter(pur => (pur.purchase_date || '').startsWith(yesterday) && pur.payment_type === 'Cash').reduce((sum, pur) => sum + Number(pur.total || 0), 0) : 0;
         const ydVendorPayments = vp.data ? vp.data.filter(payment => payment.created_at && payment.created_at.startsWith(yesterday)).reduce((sum, payment) => sum + Number(payment.amount || 0), 0) : 0;
-        const ydClosing = ydOpening + ydCollected + ydAdvances + ydSales - ydExpenses - ydCashPurchases - ydVendorPayments;
+        const ydBankDeposits = bt.data ? bt.data.filter(t => t.transaction_type === 'Deposit' && t.transaction_date === yesterday).reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
+        const ydBankWithdrawals = bt.data ? bt.data.filter(t => t.transaction_type === 'Withdraw' && t.transaction_date === yesterday).reduce((s, t) => s + Number(t.amount || 0), 0) : 0;
+        const ydClosing = ydOpening + ydCollected + ydAdvances + ydSales - ydExpenses - ydCashPurchases - ydVendorPayments - ydBankDeposits + ydBankWithdrawals;
         await supabase.from('daily_cash').insert([{ date: todayDate, opening_balance: ydClosing }]);
         setOpeningCash(ydClosing);
       } else {
