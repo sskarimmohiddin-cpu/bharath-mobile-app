@@ -69,7 +69,7 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
       {(() => {
         const istOff = 5.5 * 60 * 60000;
         const toIST = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toISOString().split('T')[0] : null;
-        const currentMonth = new Date(new Date().getTime() + istOff).toISOString().slice(0, 7);
+        
         // states upar move ho gayi
 
         const monthExpenses = expenses.filter(e => {
