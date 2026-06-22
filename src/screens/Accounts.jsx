@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { fmtDate } from '../utils/format';
 
-const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorPayments }) => {
+const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorPayments, bankTransactions, openingCash }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [view, setView] = useState('daily');
 
@@ -343,34 +343,176 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
           </div>
         </div>
       )}
-    {/* CASH IN HAND */}
-    {view === 'cash' && (
+    {/* CASH LEDGER */}
+    {view === 'cash' && (() => {
+      const istOff = 5.5 * 60 * 60000;
+      const toIST = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toISOString().split('T')[0] : null;
+      const toISTTime = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+
+      // Build all cash entries
+      const allEntries = [
+        // Repairs collected
+        ...jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date).map(j => ({
+          date: j.delivery_date,
+          time: toISTTime(j.created_at),
+          description: 'Repair — ' + (j.customer_name || '') + ' | ' + (j.device_model || '') + ' | ' + j.job_id,
+          in: Number(j.amount_paid || 0),
+          out: 0,
+          type: 'Repair',
+          color: '#2e7d32',
+        })),
+        // Advances
+        ...jobs.filter(j => j.advance_date && (j.status === 'Partial' || j.status === 'Pending')).map(j => ({
+          date: j.advance_date,
+          time: '',
+          description: 'Advance — ' + (j.customer_name || '') + ' | ' + j.job_id,
+          in: Number(j.amount_paid || 0),
+          out: 0,
+          type: 'Advance',
+          color: '#1a73e8',
+        })),
+        // Sales
+        ...sales.map(s => ({
+          date: toIST(s.created_at),
+          time: toISTTime(s.created_at),
+          description: 'Sale — ' + s.item_name + (s.sale_id ? ' | ' + s.sale_id : ''),
+          in: Number(s.total || 0),
+          out: 0,
+          type: 'Sale',
+          color: '#1565c0',
+        })),
+        // Cash Purchases
+        ...purchases.filter(p => p.payment_type === 'Cash').map(p => ({
+          date: p.purchase_date || toIST(p.created_at),
+          time: toISTTime(p.created_at),
+          description: 'Purchase — ' + p.item_name + ' | ' + (p.vendor_name || ''),
+          in: 0,
+          out: Number(p.total || 0),
+          type: 'Purchase',
+          color: '#e65100',
+        })),
+        // Expenses
+        ...expenses.map(e => ({
+          date: toIST(e.created_at),
+          time: toISTTime(e.created_at),
+          description: 'Expense — ' + e.description,
+          in: 0,
+          out: Number(e.amount || 0),
+          type: 'Expense',
+          color: '#c62828',
+        })),
+        // Vendor Payments
+        ...vendorPayments.map(vp => ({
+          date: toIST(vp.created_at),
+          time: toISTTime(vp.created_at),
+          description: 'Vendor Payment — ' + (vp.vendor_name || ''),
+          in: 0,
+          out: Number(vp.amount || 0),
+          type: 'Payment',
+          color: '#6a1b9a',
+        })),
+        // Bank Deposits (cash goes out)
+        ...(bankTransactions || []).filter(bt => bt.transaction_type === 'Deposit').map(bt => ({
+          date: bt.transaction_date,
+          time: '',
+          description: 'Bank Deposit — ' + (bt.account_name || '') + (bt.description ? ' | ' + bt.description : ''),
+          in: 0,
+          out: Number(bt.amount || 0),
+          type: 'Bank Out',
+          color: '#00838f',
+        })),
+        // Bank Withdrawals (cash comes in)
+        ...(bankTransactions || []).filter(bt => bt.transaction_type === 'Withdraw').map(bt => ({
+          date: bt.transaction_date,
+          time: '',
+          description: 'Bank Withdrawal — ' + (bt.account_name || '') + (bt.description ? ' | ' + bt.description : ''),
+          in: Number(bt.amount || 0),
+          out: 0,
+          type: 'Bank In',
+          color: '#00838f',
+        })),
+      ].filter(e => e.date).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+      // Running balance
+      let balance = openingCash || 0;
+      const entriesWithBalance = allEntries.map(e => {
+        balance += e.in - e.out;
+        return { ...e, balance };
+      });
+
+      const totalIn = allEntries.reduce((s, e) => s + e.in, 0);
+      const totalOut = allEntries.reduce((s, e) => s + e.out, 0);
+
+      return (
         <div>
+          {/* Summary */}
           <div style={{ background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1a73e8', marginBottom: 12 }}>Cash in Hand</div>
-            <StatRow label='Total Repair Collected' value={jobs.filter(j => j.status === 'Delivered' || j.status === 'Partial').reduce((s, j) => s + Number(j.amount_paid || 0), 0)} color='#2e7d32' />
-            <StatRow label='Accessories Sales' value={sales.reduce((s, j) => s + Number(j.total || 0), 0)} color='#2e7d32' />
-            <StatRow label='Total Income' value={jobs.filter(j => j.status === 'Delivered' || j.status === 'Partial').reduce((s, j) => s + Number(j.amount_paid || 0), 0) + sales.reduce((s, j) => s + Number(j.total || 0), 0)} color='#2e7d32' bold />
-            <div style={{ fontSize: 12, fontWeight: 'bold', color: '#888', marginTop: 12, marginBottom: 8 }}>PAYMENTS MADE</div>
-            <StatRow label='Vendor Payments' value={vendorPayments.reduce((s, vp) => s + Number(vp.amount || 0), 0)} color='#c62828' />
-            <StatRow label='Cash Purchases' value={purchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0)} color='#c62828' />
-            <StatRow label='Expenses' value={expenses.reduce((s, e) => s + Number(e.amount || 0), 0)} color='#c62828' />
-            <StatRow label='Total Payments' value={vendorPayments.reduce((s, vp) => s + Number(vp.amount || 0), 0) + purchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0) + expenses.reduce((s, e) => s + Number(e.amount || 0), 0)} color='#c62828' bold />
-            <div style={{ borderTop: '2px solid #1a73e8', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#333' }}>Cash in Hand</div>
-              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#2e7d32' }}>
-                Rs.{
-                  jobs.filter(j => j.status === 'Delivered' || j.status === 'Partial').reduce((s, j) => s + Number(j.amount_paid || 0), 0) +
-                  sales.reduce((s, j) => s + Number(j.total || 0), 0) -
-                  vendorPayments.reduce((s, vp) => s + Number(vp.amount || 0), 0) -
-                  purchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0) -
-                  expenses.reduce((s, e) => s + Number(e.amount || 0), 0)
-                }
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1a73e8', marginBottom: 12 }}>💵 Cash Ledger Summary</div>
+            <StatRow label='Opening Cash' value={openingCash || 0} color='#1a73e8' />
+            <StatRow label='Total Cash In' value={totalIn} color='#2e7d32' />
+            <StatRow label='Total Cash Out' value={totalOut} color='#c62828' />
+            <div style={{ borderTop: '2px solid #1a73e8', marginTop: 8, paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 16, fontWeight: 'bold' }}>Current Cash in Hand</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{(openingCash || 0) + totalIn - totalOut}</div>
+            </div>
+          </div>
+
+          {/* Passbook */}
+          <div style={{ background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 12 }}>📒 Passbook (All Entries)</div>
+
+            {/* Opening Entry */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f0f0f0', background: '#e8f1fd', borderRadius: 6, padding: '8px 10px', marginBottom: 4 }}>
+              <div style={{ flex: 2 }}>
+                <div style={{ fontSize: 12, fontWeight: 'bold', color: '#1a73e8' }}>Opening Balance</div>
               </div>
+              <div style={{ flex: 1, textAlign: 'right', fontSize: 12, color: '#2e7d32', fontWeight: 'bold' }}>+Rs.{openingCash || 0}</div>
+              <div style={{ flex: 1, textAlign: 'right', fontSize: 12, color: '#999' }}></div>
+              <div style={{ flex: 1, textAlign: 'right', fontSize: 13, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{openingCash || 0}</div>
+            </div>
+
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 10px', background: '#f5f5f5', borderRadius: 6, marginBottom: 4 }}>
+              <div style={{ flex: 2, fontSize: 11, fontWeight: 'bold', color: '#888' }}>Description</div>
+              <div style={{ flex: 1, textAlign: 'right', fontSize: 11, fontWeight: 'bold', color: '#2e7d32' }}>In (+)</div>
+              <div style={{ flex: 1, textAlign: 'right', fontSize: 11, fontWeight: 'bold', color: '#c62828' }}>Out (-)</div>
+              <div style={{ flex: 1, textAlign: 'right', fontSize: 11, fontWeight: 'bold', color: '#1a73e8' }}>Balance</div>
+            </div>
+
+            {entriesWithBalance.length === 0 && (
+              <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>No transactions yet</div>
+            )}
+
+            {entriesWithBalance.map((e, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderBottom: '1px solid #f5f5f5', borderLeft: '3px solid ' + e.color }}>
+                <div style={{ flex: 2 }}>
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center', marginBottom: 2 }}>
+                    <span style={{ background: e.color, color: 'white', fontSize: 9, padding: '1px 5px', borderRadius: 6 }}>{e.type}</span>
+                    <span style={{ fontSize: 10, color: '#999' }}>{e.date} {e.time}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#333' }}>{e.description}</div>
+                </div>
+                <div style={{ flex: 1, textAlign: 'right', fontSize: 12, fontWeight: 'bold', color: '#2e7d32' }}>
+                  {e.in > 0 ? '+Rs.' + e.in : ''}
+                </div>
+                <div style={{ flex: 1, textAlign: 'right', fontSize: 12, fontWeight: 'bold', color: '#c62828' }}>
+                  {e.out > 0 ? '-Rs.' + e.out : ''}
+                </div>
+                <div style={{ flex: 1, textAlign: 'right', fontSize: 13, fontWeight: 'bold', color: e.balance >= 0 ? '#1a73e8' : '#c62828' }}>
+                  Rs.{e.balance}
+                </div>
+              </div>
+            ))}
+
+            {/* Closing */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, padding: '10px 10px', background: '#e8f5e9', borderRadius: 8 }}>
+              <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>💵 Closing Cash</div>
+              <div style={{ fontSize: 16, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{(openingCash || 0) + totalIn - totalOut}</div>
             </div>
           </div>
         </div>
-      )}
+      );
+    })()}
     </div>
   );
 };

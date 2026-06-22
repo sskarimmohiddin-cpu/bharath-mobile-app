@@ -675,6 +675,8 @@ function App() {
           jobs={jobs} purchases={purchases} sales={sales}
           expenses={expenses} jobParts={jobParts} vendors={vendors}
           vendorPayments={vendorPayments}
+          bankTransactions={bankTransactions}
+          openingCash={openingCash}
         />
       )}
       {screen === 'banking' && (
