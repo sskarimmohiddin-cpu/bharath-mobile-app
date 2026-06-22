@@ -4,6 +4,10 @@ import { fmtDateTime } from '../utils/format';
 
 const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll, cashInHand }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const istOff = 5.5 * 60 * 60000;
+  const currentMonth = new Date(new Date().getTime() + istOff).toISOString().slice(0, 7);
+  const [filterMonth, setFilterMonth] = useState(currentMonth);
+  const [filterCategory, setFilterCategory] = useState('');
 
   const suggestions = expenses ? [...new Set(
     expenses.filter(e => e.description && e.description.toLowerCase().includes((expenseForm.description || '').toLowerCase()) && e.description !== expenseForm.description)
@@ -67,8 +71,7 @@ const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll,
         const istOff = 5.5 * 60 * 60000;
         const toIST = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toISOString().split('T')[0] : null;
         const currentMonth = new Date(new Date().getTime() + istOff).toISOString().slice(0, 7);
-        const [filterMonth, setFilterMonth] = React.useState(currentMonth);
-        const [filterCategory, setFilterCategory] = React.useState('');
+        // states upar move ho gayi
 
         const monthExpenses = expenses.filter(e => {
           const d = toIST(e.created_at);
