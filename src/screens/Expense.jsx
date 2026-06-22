@@ -5,8 +5,7 @@ import { fmtDateTime } from '../utils/format';
 const Expense = ({ expenses, expenseForm, setExpenseForm, saveExpense, fetchAll, cashInHand }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const istOff = 5.5 * 60 * 60000;
-  const currentMonth = new Date(new Date().getTime() + istOff).toISOString().slice(0, 7);
-  const [filterMonth, setFilterMonth] = useState(currentMonth);
+  const [filterMonth, setFilterMonth] = useState(new Date(new Date().getTime() + istOff).toISOString().slice(0, 7));
   const [filterCategory, setFilterCategory] = useState('');
 
   const suggestions = expenses ? [...new Set(
