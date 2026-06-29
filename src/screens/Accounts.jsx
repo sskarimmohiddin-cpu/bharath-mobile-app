@@ -87,6 +87,7 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
           { key: 'monthly', label: 'Monthly' },
           { key: 'outstanding', label: 'Outstanding' },
           { key: 'cash', label: 'Cash' },
+          { key: 'daybook', label: 'Day Book' },
         ].map(tab => (
           <button key={tab.key} onClick={() => setView(tab.key)}
             style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: view === tab.key ? '#1a73e8' : 'white', color: view === tab.key ? 'white' : '#555', fontWeight: 'bold', fontSize: 13, cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
@@ -515,6 +516,123 @@ const Accounts = ({ jobs, purchases, sales, expenses, jobParts, vendors, vendorP
               <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>💵 Closing Cash</div>
               <div style={{ fontSize: 16, fontWeight: 'bold', color: '#2e7d32' }}>Rs.{(openingCash || 0) + totalIn - totalOut}</div>
             </div>
+          </div>
+        </div>
+      );
+    })()}
+    {/* DAY BOOK */}
+    {view === 'daybook' && (() => {
+      const istOff = 5.5 * 60 * 60000;
+      const toIST = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toISOString().split('T')[0] : null;
+      const toISTTime = (ts) => ts ? new Date(new Date(ts).getTime() + istOff).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '';
+
+      const dayEntries = [
+        ...jobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === selectedDate).map(j => ({
+          time: toISTTime(j.created_at),
+          description: j.customer_name + ' — ' + j.device_model + ' | ' + j.job_id,
+          detail: j.complaint,
+          in: Number(j.amount_paid || 0), out: 0,
+          type: 'Repair', color: '#2e7d32',
+        })),
+        ...jobs.filter(j => j.advance_date === selectedDate && (j.status === 'Partial' || j.status === 'Pending')).map(j => ({
+          time: '',
+          description: 'Advance — ' + j.customer_name + ' | ' + j.job_id,
+          detail: j.device_model,
+          in: Number(j.amount_paid || 0), out: 0,
+          type: 'Advance', color: '#1a73e8',
+        })),
+        ...sales.filter(s => toIST(s.created_at) === selectedDate).map(s => ({
+          time: toISTTime(s.created_at),
+          description: 'Sale — ' + s.item_name + (s.sale_id ? ' | ' + s.sale_id : ''),
+          detail: 'Qty: ' + s.quantity + ' x Rs.' + s.price,
+          in: Number(s.total || 0), out: 0,
+          type: 'Sale', color: '#1565c0',
+        })),
+        ...purchases.filter(p => (p.purchase_date || toIST(p.created_at)) === selectedDate && p.payment_type === 'Cash').map(p => ({
+          time: toISTTime(p.created_at),
+          description: 'Purchase — ' + p.item_name + ' | ' + (p.vendor_name || ''),
+          detail: 'Cash | Qty: ' + p.quantity + ' x Rs.' + p.rate,
+          in: 0, out: Number(p.total || 0),
+          type: 'Purchase', color: '#e65100',
+        })),
+        ...purchases.filter(p => (p.purchase_date || toIST(p.created_at)) === selectedDate && p.payment_type === 'Credit').map(p => ({
+          time: toISTTime(p.created_at),
+          description: 'Purchase — ' + p.item_name + ' | ' + (p.vendor_name || ''),
+          detail: 'Credit | Qty: ' + p.quantity + ' x Rs.' + p.rate,
+          in: 0, out: 0,
+          type: 'Credit', color: '#fb8c00',
+        })),
+        ...expenses.filter(e => toIST(e.created_at) === selectedDate).map(e => ({
+          time: toISTTime(e.created_at),
+          description: 'Expense — ' + e.description,
+          detail: '',
+          in: 0, out: Number(e.amount || 0),
+          type: 'Expense', color: '#c62828',
+        })),
+        ...vendorPayments.filter(vp => toIST(vp.created_at) === selectedDate).map(vp => ({
+          time: toISTTime(vp.created_at),
+          description: 'Vendor Payment — ' + (vp.vendor_name || ''),
+          detail: '',
+          in: 0, out: Number(vp.amount || 0),
+          type: 'Payment', color: '#6a1b9a',
+        })),
+        ...(bankTransactions || []).filter(bt => bt.transaction_date === selectedDate && bt.transaction_type === 'Deposit').map(bt => ({
+          time: '',
+          description: 'Bank Deposit — ' + (bt.account_name || ''),
+          detail: bt.description || '',
+          in: 0, out: Number(bt.amount || 0),
+          type: 'Bank Out', color: '#00838f',
+        })),
+        ...(bankTransactions || []).filter(bt => bt.transaction_date === selectedDate && bt.transaction_type === 'Withdraw').map(bt => ({
+          time: '',
+          description: 'Bank Withdrawal — ' + (bt.account_name || ''),
+          detail: bt.description || '',
+          in: Number(bt.amount || 0), out: 0,
+          type: 'Bank In', color: '#00838f',
+        })),
+      ].sort((a, b) => a.time.localeCompare(b.time));
+
+      const totalIn = dayEntries.reduce((s, e) => s + e.in, 0);
+      const totalOut = dayEntries.reduce((s, e) => s + e.out, 0);
+
+      return (
+        <div>
+          {/* Summary */}
+          <div style={{ background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1a73e8', marginBottom: 12 }}>📅 Day Book — {fmtDate(selectedDate)}</div>
+            <StatRow label='Total Cash In' value={totalIn} color='#2e7d32' />
+            <StatRow label='Total Cash Out' value={totalOut} color='#c62828' />
+            <div style={{ borderTop: '2px solid #1a73e8', marginTop: 8, paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 15, fontWeight: 'bold' }}>Net Cash Flow</div>
+              <div style={{ fontSize: 15, fontWeight: 'bold', color: (totalIn - totalOut) >= 0 ? '#2e7d32' : '#c62828' }}>Rs.{totalIn - totalOut}</div>
+            </div>
+          </div>
+
+          {/* Entries */}
+          <div style={{ background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 12 }}>All Transactions</div>
+            {dayEntries.length === 0 && (
+              <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>No transactions on this date</div>
+            )}
+            {dayEntries.map((e, i) => (
+              <div key={i} style={{ padding: '10px 0', borderBottom: '1px solid #f5f5f5', borderLeft: '3px solid ' + e.color, paddingLeft: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
+                      <span style={{ background: e.color, color: 'white', fontSize: 9, padding: '1px 6px', borderRadius: 6, fontWeight: 'bold' }}>{e.type}</span>
+                      {e.time && <span style={{ fontSize: 10, color: '#999' }}>{e.time}</span>}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333' }}>{e.description}</div>
+                    {e.detail && <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{e.detail}</div>}
+                  </div>
+                  <div style={{ textAlign: 'right', minWidth: 80 }}>
+                    {e.in > 0 && <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>+Rs.{e.in}</div>}
+                    {e.out > 0 && <div style={{ fontSize: 14, fontWeight: 'bold', color: '#c62828' }}>-Rs.{e.out}</div>}
+                    {e.in === 0 && e.out === 0 && <div style={{ fontSize: 12, color: '#fb8c00' }}>Credit</div>}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       );
