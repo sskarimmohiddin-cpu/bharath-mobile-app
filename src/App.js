@@ -585,13 +585,21 @@ function App() {
         onClose={() => setPaymentModal({ show: false })}
       />
       <div style={{ background: '#1a73e8', color: 'white', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontWeight: 'bold', fontSize: 18 }}>Bharath Mobile Service</div>
-          <div style={{ fontSize: 12, opacity: 0.85 }}>Repair Management</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 32, height: 32, background: 'white', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 20 }}>📱</span>
+          </div>
+          <div>
+            <div style={{ fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>BHARATH MOBILES</div>
+            <div style={{ fontSize: 11, opacity: 0.85, letterSpacing: 2 }}>REPAIR & SERVICE</div>
+          </div>
         </div>
-        {screen !== 'home' && (
-          <button onClick={() => setScreen('home')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: 20, cursor: 'pointer' }}>Back</button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {screen !== 'home' && (
+            <button onClick={() => setScreen('home')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 14px', borderRadius: 20, cursor: 'pointer' }}>Back</button>
+          )}
+          <button onClick={() => fetchAll()} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', width: 34, height: 34, borderRadius: '50%', cursor: 'pointer', fontSize: 18 }}>⚙️</button>
+        </div>
       </div>
 
       {screen === 'home' && (
