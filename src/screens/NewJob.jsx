@@ -267,6 +267,7 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
             </div>
           )}
           <button onClick={() => {
+            if (!newPartForm.vendorId) { alert('Please select a vendor'); return; }
             if (!newPartForm.itemName || !newPartForm.rate) { alert('Enter item name and rate'); return; }
             setNewParts([...newParts, { ...newPartForm }]);
             setNewPartForm({ vendorId: '', itemName: '', quantity: '1', rate: '', paymentType: 'Credit' });
