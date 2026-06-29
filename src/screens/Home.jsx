@@ -78,14 +78,7 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
           </div>
         </div>
 
-        {isToday && (
-          <button onClick={() => {
-            const amount = prompt('Enter opening cash balance for today:');
-            if (amount !== null) saveOpeningCash(Number(amount) || 0);
-          }} style={{ marginTop: 10, background: 'rgba(56,189,248,0.12)', color: '#38bdf8', border: '1px solid rgba(56,189,248,0.25)', borderRadius: 8, padding: '5px 14px', fontSize: 12, cursor: 'pointer' }}>
-            ✏️ Edit Opening Cash
-          </button>
-        )}
+        {/* Opening cash auto calculated */}
       </div>
 
       <div style={{ padding: '0 16px' }}>

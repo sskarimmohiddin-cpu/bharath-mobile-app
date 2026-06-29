@@ -147,10 +147,14 @@ function App() {
         const prevExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === prevDateStr).reduce((s, e) => s + Number(e.amount || 0), 0);
         const prevCashPurchases = purchases.filter(p => p.payment_type === 'Cash' && (p.purchase_date || (p.created_at ? toIST(p.created_at) : null)) === prevDateStr).reduce((s, p) => s + Number(p.total || 0), 0);
         const prevVP = vendorPayments.filter(vp => vp.created_at && toIST(vp.created_at) === prevDateStr).reduce((s, vp) => s + Number(vp.amount || 0), 0);
-        opening = prevOpening + prevCollected + prevAdvances + prevSales - prevExpenses - prevCashPurchases - prevVP;
+        const prevBankDeposits = bankTransactions.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === prevDateStr).reduce((s, bt) => s + Number(bt.amount || 0), 0);
+        const prevBankWithdrawals = bankTransactions.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === prevDateStr).reduce((s, bt) => s + Number(bt.amount || 0), 0);
+        opening = prevOpening + prevCollected + prevAdvances + prevSales - prevExpenses - prevCashPurchases - prevVP - prevBankDeposits + prevBankWithdrawals;
       }
     }
-    return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening };
+    const dayBankDeposits = bankTransactions.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
+    const dayBankWithdrawals = bankTransactions.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
+    return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening, bankDeposits: dayBankDeposits, bankWithdrawals: dayBankWithdrawals };
   };
 
   const handleSave = async () => {
