@@ -520,7 +520,12 @@ function App() {
     return d.toISOString().split('T')[0] === today;
   }).reduce((s, vp) => s + Number(vp.amount || 0), 0);
   const totalCollected = jobs.filter(j => j.status === 'Delivered' || j.status === 'Partial').reduce((s, j) => s + Number(j.amount_paid || 0), 0);
-  const vendorPayable = vendors.reduce((s, v) => s + Number(v.balance || 0), 0);
+  const vendorPayable = vendors.reduce((s, v) => {
+    const vPurchases = purchases.filter(p => p.vendor_name === v.name && p.payment_type === 'Credit').reduce((t, p) => t + Number(p.total || 0), 0);
+    const vPayments = vendorPayments.filter(vp => vp.vendor_name === v.name).reduce((t, vp) => t + Number(vp.amount || 0), 0);
+    const bal = vPurchases - vPayments;
+    return s + (bal > 0 ? bal : 0);
+  }, 0);
   const todayBankDeposits = bankTransactions.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === today).reduce((s, bt) => s + Number(bt.amount || 0), 0);
   const todayBankWithdrawals = bankTransactions.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === today).reduce((s, bt) => s + Number(bt.amount || 0), 0);
   const cashInHand = openingCash + todayCollected + todayAdvances + todaySales - todayExpenses - todayCashPurchases - todayVendorPayments - todayBankDeposits + todayBankWithdrawals;
