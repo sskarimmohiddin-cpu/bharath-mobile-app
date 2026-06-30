@@ -15,7 +15,20 @@ import PaymentModal from './components/PaymentModal';
 import './App.css';
 
 function App() {
-  const [screen, setScreen] = useState('home');
+  const [screen, setScreenState] = useState('home');
+
+  const setScreen = (newScreen) => {
+    window.history.pushState({ screen: newScreen }, '', '');
+    setScreenState(newScreen);
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setScreenState('home');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [jobs, setJobs] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [purchases, setPurchases] = useState([]);
