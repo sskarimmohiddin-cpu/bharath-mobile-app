@@ -2,8 +2,19 @@ import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { fmtDateTime } from '../utils/format';
 
-const Purchase = ({ vendors, purchases, purchaseForm, setPurchaseForm, savePurchase, fetchAll }) => {
+const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchaseForm, savePurchase, fetchAll }) => {
   const [editItem, setEditItem] = useState(null);
+
+  const getVendorBalance = (vendorName) => {
+    const vPurchases = purchases.filter(p => p.vendor_name === vendorName && p.payment_type === 'Credit').reduce((s, p) => s + Number(p.total || 0), 0);
+    const vPayments = (vendorPayments || []).filter(vp => vp.vendor_name === vendorName).reduce((s, vp) => s + Number(vp.amount || 0), 0);
+    return vPurchases - vPayments;
+  };
+
+  const getVendorBalance = (vendorName) => {
+    const vPurchases = purchases.filter(p => p.vendor_name === vendorName && p.payment_type === 'Credit').reduce((s, p) => s + Number(p.total || 0), 0);
+    return vPurchases;
+  };
 
   const saveEdit = async () => {
     if (!editItem.item_name || !editItem.quantity || !editItem.rate) {
@@ -48,7 +59,7 @@ const Purchase = ({ vendors, purchases, purchaseForm, setPurchaseForm, savePurch
           style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }}>
          <option value=''>Select vendor...</option>
       <option value='new'>+ Add New Vendor</option>
-      {vendors.map(v => <option key={v.id} value={v.id}>{v.name} (Balance: Rs.{v.balance})</option>)}
+      {vendors.map(v => <option key={v.id} value={v.id}>{v.name} (Balance: Rs.{getVendorBalance(v.name)})</option>)}
         </select>
       </div>
       {[

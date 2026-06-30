@@ -664,7 +664,7 @@ function App() {
       )}
       {screen === 'purchase' && (
         <Purchase
-          vendors={vendors} purchases={purchases}
+          vendors={vendors} purchases={purchases} vendorPayments={vendorPayments}
           purchaseForm={purchaseForm} setPurchaseForm={setPurchaseForm}
           savePurchase={savePurchase} fetchAll={fetchAll}
         />
