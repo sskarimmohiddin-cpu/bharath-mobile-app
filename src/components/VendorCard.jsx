@@ -151,11 +151,11 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
               <div style={{ fontSize: 12, fontWeight: 'bold', color: '#c62828' }}>Rs.{openingBalance}</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <div style={{ fontSize: 12, color: '#555' }}>Purchases this month</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Purchases ({pbFrom} to {pbTo})</div>
               <div style={{ fontSize: 12, fontWeight: 'bold', color: '#c62828' }}>+Rs.{monthTotalPurchases}</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <div style={{ fontSize: 12, color: '#555' }}>Payments this month</div>
+              <div style={{ fontSize: 12, color: '#555' }}>Payments ({pbFrom} to {pbTo})</div>
               <div style={{ fontSize: 12, fontWeight: 'bold', color: '#2e7d32' }}>-Rs.{monthTotalPayments}</div>
             </div>
             <div style={{ borderTop: '1px solid #ddd', paddingTop: 6, display: 'flex', justifyContent: 'space-between' }}>
