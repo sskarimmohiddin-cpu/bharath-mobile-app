@@ -1,6 +1,6 @@
 import React from 'react';
 import { supabase } from '../supabase';
-import { fmtDateTime } from '../utils/format';
+// import removed
 
 const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
   const [showPassbook, setShowPassbook] = React.useState(false);
@@ -15,18 +15,7 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
     vPurchases.filter(p => p.payment_type === 'Credit').reduce((s, p) => s + Number(p.total || 0), 0) -
     vPayments.reduce((s, vp) => s + Number(vp.amount || 0), 0);
 
-  const history = [
-    ...vPurchases.map(p => ({
-      date: p.created_at, title: p.item_name,
-      detail: 'Qty: ' + p.quantity + ' x Rs.' + p.rate + ' | ' + p.payment_type,
-      amount: p.total, color: '#c62828', sign: '+', type: 'Purchase',
-    })),
-    ...vPayments.map(vp => ({
-      date: vp.created_at, title: 'Payment made',
-      detail: 'Paid to ' + v.name,
-      amount: vp.amount, color: '#2e7d32', sign: '-', type: 'Payment',
-    })),
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
 
   // Passbook entries for selected month
   const istOffset = 5.5 * 60 * 60000;
