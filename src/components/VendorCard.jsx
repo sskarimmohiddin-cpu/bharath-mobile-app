@@ -231,30 +231,7 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
         </div>
       )}
 
-      {/* TRANSACTION HISTORY (collapsed by default) */}
-      {!showPassbook && history.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 'bold', color: '#333', marginBottom: 6 }}>Transaction History</div>
-          {history.map((tx, i) => (
-            <div key={i} style={{ borderLeft: '3px solid ' + tx.color, paddingLeft: 8, marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 'bold', color: '#333' }}>{tx.title}</div>
-                  <div style={{ fontSize: 11, color: '#666' }}>{tx.detail}</div>
-                  <div style={{ fontSize: 10, color: '#999' }}>{fmtDateTime(tx.date)}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 13, fontWeight: 'bold', color: tx.color }}>{tx.sign}Rs.{tx.amount}</div>
-                  <div style={{ fontSize: 10, background: tx.color, color: 'white', padding: '1px 6px', borderRadius: 8 }}>{tx.type}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {!showPassbook && history.length === 0 && (
-        <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>No transactions yet</div>
-      )}
+    
     </div>
   );
 };
