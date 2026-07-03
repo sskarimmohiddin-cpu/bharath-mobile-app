@@ -7,10 +7,10 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const referredSuggestions = jobs ? [...new Set(
+  const referredSuggestions = jobs ? [...new Map(
     jobs.filter(j => j.customer_name && j.customer_name.toLowerCase().includes((form.referredBy || '').toLowerCase()) && j.customer_name !== form.referredBy)
-    .map(j => j.customer_name)
-  )].slice(0, 6) : [];
+    .map(j => [j.customer_name, j.phone])
+  ).entries()].slice(0, 6) : [];
 
   const handlePhotoCapture = async (e) => {
     const file = e.target.files[0];
@@ -79,10 +79,11 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
           style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
         {showReferredSuggestions && form.referredBy && form.referredBy.length > 0 && referredSuggestions.length > 0 && (
           <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
-            {referredSuggestions.map((s, i) => (
-              <div key={i} onMouseDown={() => { setForm({ ...form, referredBy: s }); setShowReferredSuggestions(false); }}
-                style={{ padding: '10px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', fontSize: 13, color: '#333' }}>
-                {s}
+            {referredSuggestions.map(([name, phone], i) => (
+              <div key={i} onMouseDown={() => { setForm({ ...form, referredBy: name }); setShowReferredSuggestions(false); }}
+                style={{ padding: '10px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer' }}>
+                <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333' }}>{name}</div>
+                {phone && <div style={{ fontSize: 11, color: '#666' }}>📞 {phone}</div>}
               </div>
             ))}
           </div>
@@ -320,4 +321,3 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
 };
 
 export default NewJob;
-
