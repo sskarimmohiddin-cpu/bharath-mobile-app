@@ -61,8 +61,8 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
 
       {/* BASIC FIELDS */}
       {[
-        { label: 'Customer Name', name: 'customerName', placeholder: 'Enter name' },
         { label: 'Phone Number *', name: 'phone', placeholder: '9876543210', type: 'tel' },
+        { label: 'Customer Name', name: 'customerName', placeholder: 'Enter name' },
         { label: 'Device Model', name: 'deviceModel', placeholder: 'e.g. Realme C35' },
         { label: 'Repair Price (Rs.) *', name: 'price', placeholder: '0', type: 'number' },
         { label: 'Job Date (leave empty for today)', name: 'jobDate', type: 'date' },
