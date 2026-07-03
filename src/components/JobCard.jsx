@@ -18,6 +18,11 @@ const JobCard = ({ job, jobParts, onEdit, onDelete, onMarkDelivered, onCollectBa
       </div>
       <div style={{ fontSize: 13, color: '#555', marginTop: 2 }}>{job.complaint}</div>
       <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>📞 {job.phone}</div>
+      {job.device_password && (
+        <div style={{ fontSize: 12, color: '#e65100', marginTop: 4, background: '#fff3e0', display: 'inline-block', padding: '2px 8px', borderRadius: 6 }}>
+          🔒 Password: {job.device_password}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
         <div style={{ fontSize: 12, color: '#999' }}>📅 {fmtDateTime(job.created_at)}</div>
         <div style={{ fontSize: 15, fontWeight: 'bold', color: '#1a73e8' }}>Rs.{job.price}</div>
