@@ -83,7 +83,19 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Referred By (optional)</div>
         <input type='text' placeholder='e.g. existing customer name'
           value={form.referredBy || ''}
-          onChange={e => { setForm({ ...form, referredBy: e.target.value }); setShowReferredSuggestions(true); }}
+          onChange={e => {
+            const val = e.target.value;
+            if (/^\d{10}$/.test(val)) {
+              const match = jobs.find(j => j.phone === val);
+              if (match && match.customer_name) {
+                setForm({ ...form, referredBy: match.customer_name });
+                setShowReferredSuggestions(false);
+                return;
+              }
+            }
+            setForm({ ...form, referredBy: val });
+            setShowReferredSuggestions(true);
+          }}
           onFocus={() => setShowReferredSuggestions(true)}
           onBlur={() => setTimeout(() => setShowReferredSuggestions(false), 500)}
           style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
