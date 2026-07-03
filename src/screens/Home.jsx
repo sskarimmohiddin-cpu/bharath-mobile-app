@@ -167,6 +167,7 @@ const Home = ({ jobs, vendors, jobParts, sales, todayCollected, todayAdvances, t
               { label: '🛍 Accessories Sale', screen: 'sale', bg: 'linear-gradient(135deg, #16a34a, #15803d)' },
               { label: '💸 Add Expense', screen: 'expense', bg: 'rgba(100,116,139,0.2)', border: '1px solid rgba(100,116,139,0.3)', color: '#94a3b8' },
               { label: '🏪 Vendor Balances', screen: 'vendors', bg: 'linear-gradient(135deg, #7c3aed, #6d28d9)' },
+              { label: '👥 Customers', screen: 'customers', bg: 'linear-gradient(135deg, #0891b2, #0e7490)' },
               { label: '📊 Stock', screen: 'stock', bg: 'linear-gradient(135deg, #0d9488, #0f766e)' },
               { label: '📈 Accounts', screen: 'accounts', bg: 'linear-gradient(135deg, #1d4ed8, #1e40af)' },
               { label: '🏦 Banking', screen: 'banking', bg: 'linear-gradient(135deg, #0e7490, #0c6173)' },

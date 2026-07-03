@@ -7,6 +7,7 @@ import NewJob from './screens/NewJob';
 import Purchase from './screens/Purchase';
 import Sale from './screens/Sale';
 import Expense from './screens/Expense';
+import Customers from './screens/Customers';
 import Vendors from './screens/Vendors';
 import Stock from './screens/Stock';
 import Accounts from './screens/Accounts';
@@ -719,6 +720,9 @@ function App() {
           setFilterDateFrom={setFilterDateFrom} setFilterDateTo={setFilterDateTo}
           vendorPayable={vendorPayable} fetchAll={fetchAll}
         />
+      )}
+      {screen === 'customers' && (
+        <Customers jobs={jobs} jobParts={jobParts} />
       )}
       {screen === 'pending' && (
         <Pending
