@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../supabase';
 
 const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedParts, setSelectedParts, newParts, setNewParts, newPartForm, setNewPartForm, fetchAll, jobs, purchases }) => {
 
+  const [showReferredSuggestions, setShowReferredSuggestions] = useState(false);
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const referredSuggestions = jobs ? [...new Set(
+    jobs.filter(j => j.customer_name && j.customer_name.toLowerCase().includes((form.referredBy || '').toLowerCase()) && j.customer_name !== form.referredBy)
+    .map(j => j.customer_name)
+  )].slice(0, 6) : [];
 
   const handlePhotoCapture = async (e) => {
     const file = e.target.files[0];
@@ -60,6 +67,27 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
         </div>
       ))}
+
+      {/* REFERRED BY */}
+      <div style={{ marginBottom: 14, position: 'relative' }}>
+        <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Referred By (optional)</div>
+        <input type='text' placeholder='e.g. existing customer name'
+          value={form.referredBy || ''}
+          onChange={e => { setForm({ ...form, referredBy: e.target.value }); setShowReferredSuggestions(true); }}
+          onFocus={() => setShowReferredSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowReferredSuggestions(false), 500)}
+          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, boxSizing: 'border-box' }} />
+        {showReferredSuggestions && form.referredBy && form.referredBy.length > 0 && referredSuggestions.length > 0 && (
+          <div style={{ position: 'absolute', left: 0, right: 0, background: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 100, maxHeight: 200, overflowY: 'auto' }}>
+            {referredSuggestions.map((s, i) => (
+              <div key={i} onMouseDown={() => { setForm({ ...form, referredBy: s }); setShowReferredSuggestions(false); }}
+                style={{ padding: '10px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', fontSize: 13, color: '#333' }}>
+                {s}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* CASH SALE TOGGLE */}
       <div style={{ marginBottom: 16, background: form.cashSale ? '#e8f5e9' : 'white', borderRadius: 10, padding: 12, border: '2px solid ' + (form.cashSale ? '#2e7d32' : '#ddd') }}>
@@ -292,3 +320,4 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
 };
 
 export default NewJob;
+

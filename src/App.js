@@ -52,6 +52,7 @@ function App() {
     customerName: '', phone: '', deviceModel: '', complaint: '',
     price: '', deliveryDate: '', deliveryTime: '', advancePayment: '',
     jobDate: '', devicePassword: '', photoUrl: '', cashSale: false,
+    referredBy: '',
     editId: null, editJobId: null,
   });
   const [purchaseForm, setPurchaseForm] = useState({
@@ -187,6 +188,7 @@ function App() {
         balance: Number(form.price) - (Number(form.advancePayment) || 0),
         status: Number(form.advancePayment) > 0 ? 'Partial' : 'Pending',
         created_at: form.jobDate ? new Date(form.jobDate).toISOString() : undefined,
+        referred_by: form.referredBy || null,
       }).eq('id', form.editId));
       const { data: oldParts } = await supabase.from('job_parts').select('*').eq('job_id', jobId);
       if (oldParts && oldParts.length > 0) {
@@ -220,6 +222,7 @@ function App() {
         advance_date: Number(form.advancePayment) > 0 ? new Date().toISOString().split('T')[0] : null,
         device_password: form.devicePassword || null,
         photo_url: form.photoUrl || null,
+        referred_by: form.referredBy || null,
       }]));
     }
     if (error) { setLoading(false); alert('Error: ' + error.message); return; }
@@ -268,7 +271,7 @@ function App() {
       a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
-    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', cashSale: false, editId: null, editJobId: null });
+    setForm({ customerName: '', phone: '', deviceModel: '', complaint: '', price: '', deliveryDate: '', deliveryTime: '', advancePayment: '', jobDate: '', devicePassword: '', photoUrl: '', cashSale: false, referredBy: '', editId: null, editJobId: null });
     setSelectedParts([]); setNewParts([]);
     fetchAll(); setScreen('home');
   };
@@ -285,6 +288,7 @@ function App() {
       price: job.price || '', deliveryDate: job.delivery_date || '',
       deliveryTime: job.delivery_time || '', advancePayment: job.amount_paid || '',
       jobDate: job.created_at ? job.created_at.split('T')[0] : '',
+      referredBy: job.referred_by || '',
       editId: job.id, editJobId: job.job_id,
     });
     setScreen('newjob');
