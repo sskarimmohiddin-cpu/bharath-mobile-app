@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { fmtDateTime } from '../utils/format';
 
-const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchaseForm, savePurchase, fetchAll }) => {
+const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchaseForm, newPurchaseItems, setNewPurchaseItems, savePurchase, fetchAll }) => {
   const [editItem, setEditItem] = useState(null);
 
   const getVendorBalance = (vendorName) => {
@@ -11,7 +11,19 @@ const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchas
     return vPurchases - vPayments;
   };
 
-  
+  const addItem = () => {
+    if (!purchaseForm.itemName || !purchaseForm.quantity || !purchaseForm.rate) {
+      alert('Please fill item name, quantity and rate'); return;
+    }
+    setNewPurchaseItems([...newPurchaseItems, {
+      itemName: purchaseForm.itemName, quantity: purchaseForm.quantity, rate: purchaseForm.rate,
+    }]);
+    setPurchaseForm({ ...purchaseForm, itemName: '', quantity: '', rate: '' });
+  };
+
+  const removeItem = (idx) => {
+    setNewPurchaseItems(newPurchaseItems.filter((_, i) => i !== idx));
+  };
 
   const saveEdit = async () => {
     if (!editItem.item_name || !editItem.quantity || !editItem.rate) {
@@ -73,9 +85,37 @@ const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchas
       ))}
       {purchaseForm.quantity && purchaseForm.rate && (
         <div style={{ background: '#e8f5e9', borderRadius: 8, padding: '10px 12px', marginBottom: 14 }}>
-          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>Total: Rs.{Number(purchaseForm.quantity) * Number(purchaseForm.rate)}</div>
+          <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>Item Total: Rs.{Number(purchaseForm.quantity) * Number(purchaseForm.rate)}</div>
         </div>
       )}
+      <button onClick={addItem}
+        style={{ width: '100%', background: '#1a73e8', color: 'white', border: 'none', borderRadius: 8, padding: 10, fontSize: 14, fontWeight: 'bold', cursor: 'pointer', marginBottom: 14 }}>
+        + Add Item
+      </button>
+
+      {newPurchaseItems.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 'bold', color: '#555', marginBottom: 6 }}>Items to Purchase ({newPurchaseItems.length}):</div>
+          {newPurchaseItems.map((item, i) => (
+            <div key={i} style={{ background: '#f5f5f5', borderRadius: 8, padding: 10, marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: 13 }}>{item.itemName}</div>
+                <div style={{ fontSize: 11, color: '#666' }}>Qty: {item.quantity} x Rs.{item.rate} = Rs.{Number(item.quantity) * Number(item.rate)}</div>
+              </div>
+              <button onClick={() => removeItem(i)}
+                style={{ background: '#c62828', color: 'white', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
+                Remove
+              </button>
+            </div>
+          ))}
+          <div style={{ background: '#e8f5e9', borderRadius: 8, padding: '10px 12px', marginTop: 6 }}>
+            <div style={{ fontSize: 14, fontWeight: 'bold', color: '#2e7d32' }}>
+              Grand Total: Rs.{newPurchaseItems.reduce((s, item) => s + Number(item.quantity) * Number(item.rate), 0)}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 13, color: '#555', marginBottom: 4 }}>Payment Type</div>
         <div style={{ display: 'flex', gap: 10 }}>
