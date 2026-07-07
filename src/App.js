@@ -420,39 +420,44 @@ function App() {
     }
   };
 
-  const savePurchase = async () => {
-    if (!purchaseForm.vendorId || !purchaseForm.itemName || !purchaseForm.quantity || !purchaseForm.rate) {
-      alert('Please fill all purchase fields'); return;
-    }
-    const total = Number(purchaseForm.quantity) * Number(purchaseForm.rate);
+const savePurchase = async () => {
+    if (!purchaseForm.vendorId) { alert('Please select a vendor'); return; }
+    if (!newPurchaseItems || newPurchaseItems.length === 0) { alert('Please add at least one item'); return; }
     const vendor = vendors.find(v => v.id === Number(purchaseForm.vendorId));
-    const { error } = await supabase.from('purchases').insert([{
-      vendor_id: Number(purchaseForm.vendorId), vendor_name: vendor.name,
-      item_name: purchaseForm.itemName, quantity: Number(purchaseForm.quantity),
-      rate: Number(purchaseForm.rate), total: total, payment_type: purchaseForm.paymentType,
-      purchase_date: purchaseForm.purchaseDate || new Date().toISOString().split('T')[0],
-    }]);
-    if (error) { alert('Error: ' + error.message); return; }
-    if (purchaseForm.paymentType === 'Credit') {
-      await supabase.from('vendors').update({ balance: vendor.balance + total }).eq('id', vendor.id);
-    }
-    const { data: existingStock } = await supabase.from('stock').select('*').eq('item_name', purchaseForm.itemName).single();
-    if (existingStock) {
-      await supabase.from('stock').update({
-        quantity: existingStock.quantity + Number(purchaseForm.quantity),
-        rate: Number(purchaseForm.rate),
-        updated_at: new Date().toISOString(),
-      }).eq('item_name', purchaseForm.itemName);
-    } else {
-      await supabase.from('stock').insert([{
-        item_name: purchaseForm.itemName,
-        quantity: Number(purchaseForm.quantity),
-        rate: Number(purchaseForm.rate),
-        updated_at: new Date().toISOString(),
+    let totalAll = 0;
+    for (const item of newPurchaseItems) {
+      const total = Number(item.quantity) * Number(item.rate);
+      totalAll += total;
+      const { error } = await supabase.from('purchases').insert([{
+        vendor_id: Number(purchaseForm.vendorId), vendor_name: vendor.name,
+        item_name: item.itemName, quantity: Number(item.quantity),
+        rate: Number(item.rate), total: total, payment_type: purchaseForm.paymentType,
+        purchase_date: purchaseForm.purchaseDate || new Date().toISOString().split('T')[0],
       }]);
+      if (error) { alert('Error: ' + error.message); return; }
+      if (purchaseForm.paymentType === 'Credit') {
+        await supabase.from('vendors').update({ balance: vendor.balance + total }).eq('id', vendor.id);
+        vendor.balance = vendor.balance + total;
+      }
+      const { data: existingStock } = await supabase.from('stock').select('*').eq('item_name', item.itemName).single();
+      if (existingStock) {
+        await supabase.from('stock').update({
+          quantity: existingStock.quantity + Number(item.quantity),
+          rate: Number(item.rate),
+          updated_at: new Date().toISOString(),
+        }).eq('item_name', item.itemName);
+      } else {
+        await supabase.from('stock').insert([{
+          item_name: item.itemName,
+          quantity: Number(item.quantity),
+          rate: Number(item.rate),
+          updated_at: new Date().toISOString(),
+        }]);
+      }
     }
-    alert('Purchase saved! ' + purchaseForm.itemName + ' x' + purchaseForm.quantity + ' = Rs.' + total);
+    alert('Purchase saved! ' + newPurchaseItems.length + ' item(s), Total: Rs.' + totalAll);
     setPurchaseForm({ vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '' });
+    setNewPurchaseItems([]);
     fetchAll();
   };
 
@@ -712,6 +717,7 @@ function App() {
         <Purchase
           vendors={vendors} purchases={purchases} vendorPayments={vendorPayments}
           purchaseForm={purchaseForm} setPurchaseForm={setPurchaseForm}
+          newPurchaseItems={newPurchaseItems} setNewPurchaseItems={setNewPurchaseItems}
           savePurchase={savePurchase} fetchAll={fetchAll}
         />
       )}
