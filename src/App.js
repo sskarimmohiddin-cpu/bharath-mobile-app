@@ -715,9 +715,10 @@ if (!purchaseForm.vendorId) { alert('Please select a vendor'); return; }
         />
       )}
       {screen === 'purchase' && (
-        <Purchase
+       <Purchase
           vendors={vendors} purchases={purchases} vendorPayments={vendorPayments}
           purchaseForm={purchaseForm} setPurchaseForm={setPurchaseForm}
+          newPurchaseItems={newPurchaseItems} setNewPurchaseItems={setNewPurchaseItems}
           savePurchase={savePurchase} fetchAll={fetchAll}
         />
       )}
