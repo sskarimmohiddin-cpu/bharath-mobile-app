@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedParts, setSelectedParts, newParts, setNewParts, newPartForm, setNewPartForm, fetchAll, jobs, purchases, staff }) => {
 
   const [showReferredSuggestions, setShowReferredSuggestions] = useState(false);
+  const [stockSearch, setStockSearch] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -215,13 +216,16 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
         </div>
       )}
 
-      {/* USE FROM EXISTING STOCK */}
+{/* USE FROM EXISTING STOCK */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 'bold', color: '#333', marginBottom: 8 }}>Use from Stock (optional)</div>
-        {stock.filter(s => s.quantity > 0).length === 0 && (
-          <div style={{ fontSize: 12, color: '#999' }}>No stock available.</div>
+        <input type='text' placeholder='Type item name to search stock...' value={stockSearch}
+          onChange={e => setStockSearch(e.target.value)}
+          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box', marginBottom: 8 }} />
+        {stockSearch.trim() && stock.filter(s => s.quantity > 0 && s.item_name.toLowerCase().includes(stockSearch.trim().toLowerCase())).length === 0 && (
+          <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>No matching stock item.</div>
         )}
-        {stock.filter(s => s.quantity > 0).map((item, i) => {
+        {stockSearch.trim() && stock.filter(s => s.quantity > 0 && s.item_name.toLowerCase().includes(stockSearch.trim().toLowerCase())).map((item, i) => {
           const selected = selectedParts.find(p => p.item_name === item.item_name && !p.isExisting);
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: selected ? '#e8f5e9' : 'white', borderRadius: 8, padding: '8px 12px', marginBottom: 8, border: '1px solid ' + (selected ? '#2e7d32' : '#ddd') }}>
@@ -243,13 +247,25 @@ const NewJob = ({ form, setForm, handleSave, loading, vendors, stock, selectedPa
                     }} style={{ width: 28, height: 28, borderRadius: 14, border: 'none', background: '#2e7d32', color: 'white', fontSize: 16, cursor: 'pointer' }}>+</button>
                   </>
                 ) : (
-                  <button onClick={() => setSelectedParts([...selectedParts, { item_name: item.item_name, quantity: 1, rate: item.rate }])}
+                  <button onClick={() => { setSelectedParts([...selectedParts, { item_name: item.item_name, quantity: 1, rate: item.rate }]); setStockSearch(''); }}
                     style={{ padding: '4px 12px', borderRadius: 8, border: 'none', background: '#1a73e8', color: 'white', fontSize: 12, cursor: 'pointer' }}>Add</button>
                 )}
               </div>
             </div>
           );
         })}
+        {selectedParts.filter(p => !p.isExisting).length > 0 && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 'bold', color: '#555', marginBottom: 6 }}>Selected from Stock:</div>
+            {selectedParts.filter(p => !p.isExisting).map((p, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#e8f5e9', borderRadius: 8, padding: '6px 12px', marginBottom: 6 }}>
+                <div style={{ fontSize: 13 }}>{p.item_name} x {p.quantity} (Rs.{p.rate} each)</div>
+                <button onClick={() => setSelectedParts(selectedParts.filter(sp => !(sp.item_name === p.item_name && !sp.isExisting)))}
+                  style={{ background: '#c62828', color: 'white', border: 'none', borderRadius: 6, padding: '2px 8px', fontSize: 11, cursor: 'pointer' }}>Remove</button>
+              </div>
+            ))}
+          </div>
+        )}
         {selectedParts.length > 0 && (
           <div style={{ background: '#e8f5e9', borderRadius: 8, padding: '8px 12px', marginTop: 4 }}>
             <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>Stock Parts Cost: Rs.{selectedParts.reduce((s, p) => s + (p.quantity * p.rate), 0)}</div>
