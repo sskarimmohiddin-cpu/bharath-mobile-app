@@ -59,8 +59,9 @@ function App() {
     editId: null, editJobId: null,
   });
   const [purchaseForm, setPurchaseForm] = useState({
-    vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '',
+    vendorId: '', itemName: '', quantity: '', rate: '', paymentType: 'Credit', purchaseDate: '', 
   });
+  const [newPurchaseItems, setNewPurchaseItems] = useState([]);
   const [saleForm, setSaleForm] = useState({
     itemName: '', quantity: '', price: '', customerPhone: '', purchaseCost: '', staffName: '',
   });
