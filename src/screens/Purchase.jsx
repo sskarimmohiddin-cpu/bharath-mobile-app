@@ -46,6 +46,93 @@ const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchas
     fetchAll();
   };
 
+  const deleteItem = async (p) => {
+    if (!window.confirm('Delete this item?')) return;
+    await supabase.from('purchases').delete().eq('id', p.id);
+    if (p.payment_type === 'Credit') {
+      const vendor = vendors.find(v => v.name === p.vendor_name);
+      if (vendor) await supabase.from('vendors').update({ balance: vendor.balance - p.total }).eq('id', vendor.id);
+    }
+    const { data: stockItem } = await supabase
+      .from('stock').select('*')
+      .eq('item_name', p.item_name).single();
+    if (stockItem) {
+      const newQty = stockItem.quantity - Number(p.quantity);
+      await supabase.from('stock')
+        .update({ quantity: newQty < 0 ? 0 : newQty })
+        .eq('item_name', p.item_name);
+    }
+    fetchAll();
+  };
+
+  const renderItemRow = (p) => (
+    editItem && editItem.id === p.id ? (
+      <div key={p.id} style={{ marginBottom: 10, borderBottom: '1px solid #eee', paddingBottom: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 'bold', color: '#e65100', marginBottom: 8 }}>Editing Item</div>
+        {[
+          { label: 'Item Name', key: 'item_name' },
+          { label: 'Quantity', key: 'quantity', type: 'number' },
+          { label: 'Rate (Rs.)', key: 'rate', type: 'number' },
+        ].map(field => (
+          <div key={field.key} style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{field.label}</div>
+            <input type={field.type || 'text'} value={editItem[field.key]}
+              onChange={e => setEditItem({ ...editItem, [field.key]: e.target.value })}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }} />
+          </div>
+        ))}
+        {editItem.quantity && editItem.rate && (
+          <div style={{ background: '#e8f5e9', borderRadius: 8, padding: '6px 10px', marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>New Total: Rs.{Number(editItem.quantity) * Number(editItem.rate)}</div>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={saveEdit}
+            style={{ flex: 1, background: '#2e7d32', color: 'white', border: 'none', borderRadius: 8, padding: 8, fontSize: 13, cursor: 'pointer' }}>
+            Save
+          </button>
+          <button onClick={() => setEditItem(null)}
+            style={{ flex: 1, background: '#555', color: 'white', border: 'none', borderRadius: 8, padding: 8, fontSize: 13, cursor: 'pointer' }}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    ) : (
+      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid #eee' }}>
+        <div>
+          <div style={{ fontWeight: 'bold', fontSize: 13 }}>{p.item_name}</div>
+          <div style={{ fontSize: 11, color: '#666' }}>Qty: {p.quantity} x Rs.{p.rate}</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontWeight: 'bold', color: '#c62828', fontSize: 13 }}>Rs.{p.total}</div>
+          <button onClick={() => setEditItem({ ...p, oldTotal: p.total })}
+            style={{ background: '#555', color: 'white', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>
+            Edit
+          </button>
+          <button onClick={() => deleteItem(p)}
+            style={{ background: '#c62828', color: 'white', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer' }}>
+            Delete
+          </button>
+        </div>
+      </div>
+    )
+  );
+
+  const grouped = {};
+  const ungrouped = [];
+  purchases.forEach(p => {
+    if (p.bill_id) {
+      if (!grouped[p.bill_id]) grouped[p.bill_id] = [];
+      grouped[p.bill_id].push(p);
+    } else {
+      ungrouped.push(p);
+    }
+  });
+  const billGroups = Object.keys(grouped).map(billId => ({
+    billId: Number(billId),
+    items: grouped[billId],
+  })).sort((a, b) => b.billId - a.billId).slice(0, 15);
+
   return (
     <div style={{ padding: 20 }}>
       <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Purchase Stock</div>
@@ -138,80 +225,31 @@ const Purchase = ({ vendors, purchases, vendorPayments, purchaseForm, setPurchas
         Save Purchase
       </button>
       <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 24, marginBottom: 10 }}>Recent Purchases</div>
-      {purchases.slice(0, 20).map((p, i) => (
-        <div key={i} style={{ background: 'white', borderRadius: 10, padding: 12, marginBottom: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-          {editItem && editItem.id === p.id ? (
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 'bold', color: '#e65100', marginBottom: 8 }}>Editing Purchase</div>
-              {[
-                { label: 'Item Name', key: 'item_name' },
-                { label: 'Quantity', key: 'quantity', type: 'number' },
-                { label: 'Rate (Rs.)', key: 'rate', type: 'number' },
-              ].map(field => (
-                <div key={field.key} style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{field.label}</div>
-                  <input type={field.type || 'text'} value={editItem[field.key]}
-                    onChange={e => setEditItem({ ...editItem, [field.key]: e.target.value })}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }} />
-                </div>
-              ))}
-              {editItem.quantity && editItem.rate && (
-                <div style={{ background: '#e8f5e9', borderRadius: 8, padding: '6px 10px', marginBottom: 8 }}>
-                  <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2e7d32' }}>New Total: Rs.{Number(editItem.quantity) * Number(editItem.rate)}</div>
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={saveEdit}
-                  style={{ flex: 1, background: '#2e7d32', color: 'white', border: 'none', borderRadius: 8, padding: 8, fontSize: 13, cursor: 'pointer' }}>
-                  Save
-                </button>
-                <button onClick={() => setEditItem(null)}
-                  style={{ flex: 1, background: '#555', color: 'white', border: 'none', borderRadius: 8, padding: 8, fontSize: 13, cursor: 'pointer' }}>
-                  Cancel
-                </button>
-              </div>
+      {billGroups.map(group => {
+        const first = group.items[0];
+        const billTotal = group.items.reduce((s, it) => s + Number(it.total || 0), 0);
+        return (
+          <div key={group.billId} style={{ background: 'white', borderRadius: 10, padding: 12, marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontWeight: 'bold', fontSize: 14, color: '#1a73e8' }}>Bill #{group.billId}</div>
+              <div style={{ fontWeight: 'bold', color: '#c62828', fontSize: 14 }}>Rs.{billTotal}</div>
             </div>
-          ) : (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ fontWeight: 'bold', fontSize: 14 }}>{p.item_name}</div>
-                <div style={{ fontWeight: 'bold', color: '#c62828' }}>Rs.{p.total}</div>
-              </div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-                {p.vendor_name} | Qty: {p.quantity} x Rs.{p.rate} | {p.payment_type}
-              </div>
-              <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
-                {fmtDateTime(p.created_at)}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <button onClick={() => setEditItem({ ...p, oldTotal: p.total })}
-                  style={{ flex: 1, background: '#555', color: 'white', border: 'none', borderRadius: 8, padding: 6, fontSize: 12, cursor: 'pointer' }}>
-                  Edit
-                </button>
-                <button onClick={async () => {
-                  if (window.confirm('Delete this purchase?')) {
-                    await supabase.from('purchases').delete().eq('id', p.id);
-                    if (p.payment_type === 'Credit') {
-                      const vendor = vendors.find(v => v.name === p.vendor_name);
-                      if (vendor) await supabase.from('vendors').update({ balance: vendor.balance - p.total }).eq('id', vendor.id);
-                    }
-                    const { data: stockItem } = await supabase
-                      .from('stock').select('*')
-                      .eq('item_name', p.item_name).single();
-                    if (stockItem) {
-                      const newQty = stockItem.quantity - Number(p.quantity);
-                      await supabase.from('stock')
-                        .update({ quantity: newQty < 0 ? 0 : newQty })
-                        .eq('item_name', p.item_name);
-                    }
-                    fetchAll();
-                  }
-                }} style={{ flex: 1, background: '#c62828', color: 'white', border: 'none', borderRadius: 8, padding: 6, fontSize: 12, cursor: 'pointer' }}>
-                  Delete
-                </button>
-              </div>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+              {first.vendor_name} | {first.payment_type} | {fmtDateTime(first.created_at)}
             </div>
-          )}
+            {group.items.map(p => renderItemRow(p))}
+          </div>
+        );
+      })}
+      {ungrouped.slice(0, 20).map(p => (
+        <div key={p.id} style={{ background: 'white', borderRadius: 10, padding: 12, marginBottom: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+          {renderItemRow(p)}
+          <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+            {p.vendor_name} | {p.payment_type}
+          </div>
+          <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>
+            {fmtDateTime(p.created_at)}
+          </div>
         </div>
       ))}
     </div>
