@@ -177,23 +177,59 @@ function App() {
     return { collected, advances, sales: daySales, cashPurchases, purchases: totalPurchases, partsCost, vendorPayments: dayVP, expenses: dayExpenses, netProfit, opening, bankDeposits: dayBankDeposits, bankWithdrawals: dayBankWithdrawals };
   };
 
-  const recalcCashChain = async (fromDateStr) => {
-    if (!fromDateStr) return;
+const recalcCashChain = async (fromDateStr) => {
+    if (!fromDateStr || fromDateStr >= today) return;
+    const [jFresh, sFresh, eFresh, pFresh, vpFresh, btFresh, jpFresh, dcFresh] = await Promise.all([
+      supabase.from('jobs').select('*'),
+      supabase.from('sales').select('*'),
+      supabase.from('expenses').select('*'),
+      supabase.from('purchases').select('*'),
+      supabase.from('vendor_payments').select('*'),
+      supabase.from('bank_transactions').select('*'),
+      supabase.from('job_parts').select('*'),
+      supabase.from('daily_cash').select('*'),
+    ]);
+    const freshJobs = jFresh.data || [];
+    const freshSales = sFresh.data || [];
+    const freshExpenses = eFresh.data || [];
+    const freshPurchases = pFresh.data || [];
+    const freshVP = vpFresh.data || [];
+    const freshBT = btFresh.data || [];
+    const freshJobParts = jpFresh.data || [];
+    const freshDC = dcFresh.data || [];
+
+    const getFreshDayData = (date) => {
+      const collected = freshJobs.filter(j => (j.status === 'Delivered' || j.status === 'Partial') && j.delivery_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
+      const advances = freshJobs.filter(j => j.advance_date === date).reduce((s, j) => s + Number(j.amount_paid || 0), 0);
+      const daySales = freshSales.filter(s => s.created_at && s.created_at.startsWith(date)).reduce((s, j) => s + Number(j.total || 0), 0);
+      const dayExpenses = freshExpenses.filter(e => e.created_at && e.created_at.startsWith(date) && e.payment_source !== 'Bank').reduce((s, e) => s + Number(e.amount || 0), 0);
+      const dayPurchases = freshPurchases.filter(p => (p.purchase_date || (p.created_at ? p.created_at.split('T')[0] : null)) === date);
+      const cashPurchases = dayPurchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0);
+      const partsCost = freshJobParts.filter(jp => { const job = freshJobs.find(j => j.job_id === jp.job_id); return job && (job.status === 'Delivered' || job.status === 'Partial') && job.delivery_date === date; }).reduce((s, jp) => s + Number(jp.total || 0), 0);
+      const dayVP = freshVP.filter(vp => vp.created_at && vp.created_at.startsWith(date)).reduce((s, vp) => s + Number(vp.amount || 0), 0);
+      const dayBankDeposits = freshBT.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
+      const dayBankWithdrawals = freshBT.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
+      const dcRow = freshDC.find(d => d.date === date);
+      const opening = dcRow ? (dcRow.opening_balance || 0) : 0;
+      return { opening, collected, advances, sales: daySales, expenses: dayExpenses, cashPurchases, vendorPayments: dayVP, bankDeposits: dayBankDeposits, bankWithdrawals: dayBankWithdrawals };
+    };
+
     let current = new Date(fromDateStr);
     const end = new Date(today);
-    if (current >= end) return;
     while (current < end) {
       const dateStr = current.toISOString().split('T')[0];
-      const dayData = await getDayData(dateStr);
+      const dayData = getFreshDayData(dateStr);
       const closing = dayData.opening + dayData.collected + dayData.advances + dayData.sales - dayData.expenses - dayData.cashPurchases - dayData.vendorPayments - dayData.bankDeposits + dayData.bankWithdrawals;
       const nextDate = new Date(current);
       nextDate.setDate(nextDate.getDate() + 1);
       const nextDateStr = nextDate.toISOString().split('T')[0];
-      const { data: existingNext } = await supabase.from('daily_cash').select('*').eq('date', nextDateStr);
-      if (existingNext && existingNext.length > 0) {
+      const existingNext = freshDC.find(d => d.date === nextDateStr);
+      if (existingNext) {
         await supabase.from('daily_cash').update({ opening_balance: closing }).eq('date', nextDateStr);
+        existingNext.opening_balance = closing;
       } else {
         await supabase.from('daily_cash').insert([{ date: nextDateStr, opening_balance: closing }]);
+        freshDC.push({ date: nextDateStr, opening_balance: closing });
       }
       current = nextDate;
     }
