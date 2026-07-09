@@ -205,7 +205,6 @@ const recalcCashChain = async (fromDateStr) => {
       const dayExpenses = freshExpenses.filter(e => e.created_at && e.created_at.startsWith(date) && e.payment_source !== 'Bank').reduce((s, e) => s + Number(e.amount || 0), 0);
       const dayPurchases = freshPurchases.filter(p => (p.purchase_date || (p.created_at ? p.created_at.split('T')[0] : null)) === date);
       const cashPurchases = dayPurchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0);
-      git
       const dayVP = freshVP.filter(vp => vp.created_at && vp.created_at.startsWith(date)).reduce((s, vp) => s + Number(vp.amount || 0), 0);
       const dayBankDeposits = freshBT.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
       const dayBankWithdrawals = freshBT.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
