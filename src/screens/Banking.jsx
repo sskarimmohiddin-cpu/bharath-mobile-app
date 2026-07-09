@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabase';
 
-const Banking = ({ bankAccounts, bankTransactions, fetchAll, cashInHand }) => {
+const Banking = ({ bankAccounts, bankTransactions, fetchAll, cashInHand, recalcCashChain, today }) => {
   const [view, setView] = useState('accounts');
   const [showAddAccount, setShowAddAccount] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -55,6 +55,9 @@ const Banking = ({ bankAccounts, bankTransactions, fetchAll, cashInHand }) => {
       newBalance = selectedAccount.balance - amount;
     }
     await supabase.from('bank_accounts').update({ balance: newBalance }).eq('id', selectedAccount.id);
+    if ((txForm.type === 'Deposit' || txForm.type === 'Withdraw') && txDate < today) {
+      await recalcCashChain(txDate);
+    }
     alert('Transaction saved!');
     setTxForm({ type: 'Deposit', amount: '', description: '', date: '' });
     setSelectedAccount(null);
