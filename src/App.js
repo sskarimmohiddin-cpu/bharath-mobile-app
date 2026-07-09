@@ -358,6 +358,7 @@ function App() {
           delivery_date: date,
         }).eq('job_id', jobId);
         if (!error) {
+          if (date < today) { await recalcCashChain(date); }
           if (sendMsg) {
             const url = 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(message);
             const a = document.createElement('a');
@@ -385,6 +386,7 @@ function App() {
           advance_date: date,
         }).eq('job_id', jobId);
         if (!error) {
+          if (date < today) { await recalcCashChain(date); }
           const message = 'Hello! Advance payment received at Bharath Mobile Service. Job ID: ' + jobId + '. Advance paid: Rs.' + amountPaid + '. Balance remaining: Rs.' + balance + '. Thank you!';
           const sendMsg = window.confirm('Send WhatsApp message to ' + phone + '?');
           if (sendMsg) {
@@ -415,6 +417,7 @@ function App() {
           delivery_date: date,
         }).eq('job_id', jobId);
         if (!error) {
+          if (date < today) { await recalcCashChain(date); }
           if (sendMsg) {
             const url = 'https://wa.me/91' + phone + '?text=' + encodeURIComponent(message);
             const a = document.createElement('a');
