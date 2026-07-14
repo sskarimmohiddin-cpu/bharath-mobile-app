@@ -3,7 +3,7 @@ import { supabase } from '../supabase';
 import { fmtDateTime } from '../utils/format';
 import VendorCard from '../components/VendorCard';
 
-const Vendors = ({ vendors, purchases, vendorPayments, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, vendorPayable, fetchAll }) => (
+const Vendors = ({ vendors, purchases, vendorPayments, filteredTx, filterDateFrom, filterDateTo, setFilterDateFrom, setFilterDateTo, vendorPayable, fetchAll, bankAccounts }) => (
   <div style={{ padding: 20 }}>
     <div style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Vendor Balances</div>
 
@@ -36,6 +36,7 @@ const Vendors = ({ vendors, purchases, vendorPayments, filteredTx, filterDateFro
         vendorPayments={vendorPayments}
         vendors={vendors}
         fetchAll={fetchAll}
+        bankAccounts={bankAccounts}
       />
     ))}
 

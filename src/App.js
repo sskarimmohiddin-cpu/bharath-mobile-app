@@ -147,7 +147,7 @@ function App() {
     const cashPurchases = dayPurchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0);
     const totalPurchases = dayPurchases.reduce((s, p) => s + Number(p.total || 0), 0);
     const partsCost = jobParts.filter(jp => { const job = jobs.find(j => j.job_id === jp.job_id); return job && (job.status === 'Delivered' || job.status === 'Partial') && job.delivery_date === date; }).reduce((s, jp) => s + Number(jp.total || 0), 0);
-    const dayVP = vendorPayments.filter(vp => vp.created_at && toIST(vp.created_at) === date).reduce((s, vp) => s + Number(vp.amount || 0), 0);
+    const dayVP = vendorPayments.filter(vp => vp.created_at && vp.payment_source !== 'Bank' && toIST(vp.created_at) === date).reduce((s, vp) => s + Number(vp.amount || 0), 0);
     const salePurchaseCost = sales.filter(s => s.created_at && toIST(s.created_at) === date).reduce((sum, s) => sum + (Number(s.purchase_cost || 0) * Number(s.quantity || 1)), 0);
     const netProfit = Math.round((collected + daySales - partsCost - salePurchaseCost) * 100) / 100;
     const { data: dcData } = await supabase.from('daily_cash').select('*').eq('date', date);
@@ -166,7 +166,7 @@ function App() {
         const prevSales = sales.filter(s => s.created_at && toIST(s.created_at) === prevDateStr).reduce((s, j) => s + Number(j.total || 0), 0);
         const prevExpenses = expenses.filter(e => e.created_at && toIST(e.created_at) === prevDateStr && e.payment_source !== 'Bank').reduce((s, e) => s + Number(e.amount || 0), 0);
         const prevCashPurchases = purchases.filter(p => p.payment_type === 'Cash' && (p.purchase_date || (p.created_at ? toIST(p.created_at) : null)) === prevDateStr).reduce((s, p) => s + Number(p.total || 0), 0);
-        const prevVP = vendorPayments.filter(vp => vp.created_at && toIST(vp.created_at) === prevDateStr).reduce((s, vp) => s + Number(vp.amount || 0), 0);
+        const prevVP = vendorPayments.filter(vp => vp.created_at && vp.payment_source !== 'Bank' && toIST(vp.created_at) === prevDateStr).reduce((s, vp) => s + Number(vp.amount || 0), 0);
         const prevBankDeposits = bankTransactions.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === prevDateStr).reduce((s, bt) => s + Number(bt.amount || 0), 0);
         const prevBankWithdrawals = bankTransactions.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === prevDateStr).reduce((s, bt) => s + Number(bt.amount || 0), 0);
         opening = prevOpening + prevCollected + prevAdvances + prevSales - prevExpenses - prevCashPurchases - prevVP - prevBankDeposits + prevBankWithdrawals;
@@ -203,7 +203,7 @@ function App() {
       const dayExpenses = freshExpenses.filter(e => e.created_at && e.created_at.startsWith(date) && e.payment_source !== 'Bank').reduce((s, e) => s + Number(e.amount || 0), 0);
       const dayPurchases = freshPurchases.filter(p => (p.purchase_date || (p.created_at ? p.created_at.split('T')[0] : null)) === date);
       const cashPurchases = dayPurchases.filter(p => p.payment_type === 'Cash').reduce((s, p) => s + Number(p.total || 0), 0);
-      const dayVP = freshVP.filter(vp => vp.created_at && vp.created_at.startsWith(date)).reduce((s, vp) => s + Number(vp.amount || 0), 0);
+      const dayVP = freshVP.filter(vp => vp.created_at && vp.payment_source !== 'Bank' && vp.created_at.startsWith(date)).reduce((s, vp) => s + Number(vp.amount || 0), 0);
       const dayBankDeposits = freshBT.filter(bt => bt.transaction_type === 'Deposit' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
       const dayBankWithdrawals = freshBT.filter(bt => bt.transaction_type === 'Withdraw' && bt.transaction_date === date).reduce((s, bt) => s + Number(bt.amount || 0), 0);
       const dcRow = freshDC.find(d => d.date === date);
@@ -649,6 +649,7 @@ function App() {
   const todayNetProfit = Math.round((todayCollected + todaySales - todayPartsCost - todaySalePurchaseCost) * 100) / 100;
   const todayVendorPayments = vendorPayments.filter(vp => {
     if (!vp.created_at) return false;
+    if (vp.payment_source === 'Bank') return false;
     const d = new Date(new Date(vp.created_at).getTime() + istOffset);
     return d.toISOString().split('T')[0] === today;
   }).reduce((s, vp) => s + Number(vp.amount || 0), 0);
@@ -808,6 +809,7 @@ function App() {
           filterDateFrom={filterDateFrom} filterDateTo={filterDateTo}
           setFilterDateFrom={setFilterDateFrom} setFilterDateTo={setFilterDateTo}
           vendorPayable={vendorPayable} fetchAll={fetchAll}
+          bankAccounts={bankAccounts}
         />
       )}
       {screen === 'customers' && (
