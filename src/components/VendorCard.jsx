@@ -2,7 +2,7 @@ import React from 'react';
 import { supabase } from '../supabase';
 // import removed
 
-const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
+const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll, bankAccounts }) => {
   const [showPassbook, setShowPassbook] = React.useState(false);
   const istNow = new Date(new Date().getTime() + 5.5 * 60 * 60000).toISOString().split('T')[0];
   const [pbFrom, setPbFrom] = React.useState(istNow);
@@ -93,7 +93,48 @@ const VendorCard = ({ v, purchases, vendorPayments, vendors, fetchAll }) => {
           const paid = prompt('Pay to ' + v.name + '\nCurrent balance: Rs.' + calculatedBalance + '\nEnter amount paying:');
           if (paid === null) return;
           const amount = Number(paid) || 0;
-          await supabase.from('vendor_payments').insert([{ vendor_id: v.id, vendor_name: v.name, amount: amount }]);
+          if (amount <= 0) { alert('Enter a valid amount'); return; }
+
+          let paymentSource = 'Cash';
+          let accountName = null;
+
+          if (bankAccounts && bankAccounts.length > 0) {
+            const viaBank = window.confirm('Pay via Bank account?\n\nPress OK for Bank, Cancel for Cash.');
+            if (viaBank) {
+              if (bankAccounts.length === 1) {
+                accountName = bankAccounts[0].account_name;
+              } else {
+                const names = bankAccounts.map(a => a.account_name).join(', ');
+                const chosen = prompt('Which bank account?\n(' + names + ')');
+                if (!chosen) { alert('No account selected, payment cancelled'); return; }
+                const match = bankAccounts.find(a => a.account_name.toLowerCase() === chosen.trim().toLowerCase());
+                if (!match) { alert('Account not found, payment cancelled'); return; }
+                accountName = match.account_name;
+              }
+              paymentSource = 'Bank';
+            }
+          }
+
+          await supabase.from('vendor_payments').insert([{
+            vendor_id: v.id, vendor_name: v.name, amount: amount,
+            payment_source: paymentSource, account_name: accountName,
+          }]);
+
+          if (paymentSource === 'Bank') {
+            const account = bankAccounts.find(a => a.account_name === accountName);
+            if (account) {
+              await supabase.from('bank_transactions').insert([{
+                account_id: account.id,
+                account_name: account.account_name,
+                transaction_type: 'Vendor Payment',
+                amount: amount,
+                description: 'Payment to ' + v.name,
+                transaction_date: new Date().toISOString().split('T')[0],
+              }]);
+              await supabase.from('bank_accounts').update({ balance: account.balance - amount }).eq('id', account.id);
+            }
+          }
+
           fetchAll();
         }}
           style={{ width: '100%', marginTop: 10, background: '#1a73e8', color: 'white', border: 'none', borderRadius: 8, padding: 8, fontSize: 13, cursor: 'pointer' }}>
