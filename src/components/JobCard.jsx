@@ -1,20 +1,22 @@
 import React from 'react';
 import { fmtDateTime } from '../utils/format';
 
-const JobCard = ({ job, jobParts, onEdit, onDelete, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance }) => {
+const JobCard = ({ job, jobParts, onEdit, onDelete, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance, onOpenPayments }) => {
   const parts = jobParts ? jobParts.filter(p => p.job_id === job.job_id) : [];
   return (
     <div style={{ background: 'white', borderRadius: 12, padding: 16, marginBottom: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div style={{ fontWeight: 'bold', color: '#1a73e8' }}>{job.job_id}</div>
-        <div style={{
-          background: job.status === 'Pending' ? '#fff3e0' : job.status === 'Returned' ? '#fce4ec' : job.status === 'Partial' ? '#fff3e0' : '#e8f5e9',
-          color: job.status === 'Pending' ? '#f57c00' : job.status === 'Returned' ? '#c62828' : job.status === 'Partial' ? '#e65100' : '#2e7d32',
-          padding: '3px 10px', borderRadius: 20, fontSize: 12
-        }}>{job.status}</div>
-      </div>
-      <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 6 }}>
-        {job.customer_name} — {job.device_model}
+      <div onClick={() => onOpenPayments && onOpenPayments(job.job_id)} style={{ cursor: 'pointer' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ fontWeight: 'bold', color: '#1a73e8' }}>{job.job_id} <span style={{ fontSize: 11, color: '#999', fontWeight: 'normal' }}>(tap for payment history)</span></div>
+          <div style={{
+            background: job.status === 'Pending' ? '#fff3e0' : job.status === 'Returned' ? '#fce4ec' : job.status === 'Partial' ? '#fff3e0' : '#e8f5e9',
+            color: job.status === 'Pending' ? '#f57c00' : job.status === 'Returned' ? '#c62828' : job.status === 'Partial' ? '#e65100' : '#2e7d32',
+            padding: '3px 10px', borderRadius: 20, fontSize: 12
+          }}>{job.status}</div>
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 6 }}>
+          {job.customer_name} — {job.device_model}
+        </div>
       </div>
       <div style={{ fontSize: 13, color: '#555', marginTop: 2 }}>{job.complaint}</div>
       <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>📞 {job.phone}</div>
@@ -67,13 +69,13 @@ const JobCard = ({ job, jobParts, onEdit, onDelete, onMarkDelivered, onCollectBa
       {/* ACTION BUTTONS */}
       <div style={{ marginTop: 10 }}>
         {(job.status === 'Pending' || job.status === 'Partial') && (
-          <button onClick={() => onMarkDelivered(job.job_id, job.phone, job.price)}
+          <button onClick={() => onMarkDelivered(job.job_id, job.phone, job.price, job.balance)}
             style={{ width: '100%', background: '#1a73e8', color: 'white', border: 'none', borderRadius: 8, padding: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', marginBottom: 6 }}>
             Mark Delivered and Collect Payment
           </button>
         )}
         {job.status === 'Pending' && (
-          <button onClick={() => onCollectAdvance(job.job_id, job.phone, job.price)}
+          <button onClick={() => onCollectAdvance(job.job_id, job.phone, job.price, job.amount_paid)}
             style={{ width: '100%', background: '#f57c00', color: 'white', border: 'none', borderRadius: 8, padding: 10, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', marginBottom: 6 }}>
             💰 Collect Advance
           </button>
