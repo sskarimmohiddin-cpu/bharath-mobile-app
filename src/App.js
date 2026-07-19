@@ -39,6 +39,7 @@ function App() {
   const [vendorPayments, setVendorPayments] = useState([]);
   const [stock, setStock] = useState([]);
   const [jobParts, setJobParts] = useState([]);
+  const [jobPayments, setJobPayments] = useState([]);
   const [bankAccounts, setBankAccounts] = useState([]);
   const [bankTransactions, setBankTransactions] = useState([]);
   const [staff, setStaff] = useState([]);
