@@ -1,7 +1,7 @@
 import React from 'react';
 import JobCard from '../components/JobCard';
 
-const Pending = ({ jobs, jobParts, onEditJob, onDeleteJob, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance }) => {
+const Pending = ({ jobs, jobParts, onEditJob, onDeleteJob, onMarkDelivered, onCollectBalance, onMarkReturned, onCollectAdvance, onOpenPayments }) => {
   const pendingJobs = jobs.filter(j => j.status === 'Pending' || j.status === 'Partial');
 
   const [search, setSearch] = React.useState('');
@@ -44,6 +44,7 @@ const Pending = ({ jobs, jobParts, onEditJob, onDeleteJob, onMarkDelivered, onCo
               onCollectBalance={onCollectBalance}
               onMarkReturned={onMarkReturned}
               onCollectAdvance={onCollectAdvance}
+              onOpenPayments={onOpenPayments}
             />
           ))}
         </div>
@@ -62,6 +63,7 @@ const Pending = ({ jobs, jobParts, onEditJob, onDeleteJob, onMarkDelivered, onCo
               onCollectBalance={onCollectBalance}
               onMarkReturned={onMarkReturned}
               onCollectAdvance={onCollectAdvance}
+              onOpenPayments={onOpenPayments}
             />
           ))}
         </div>
