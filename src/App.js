@@ -302,13 +302,22 @@ function App() {
     }
     if (error) { setLoading(false); alert('Error: ' + error.message); return; }
 
-    if (!form.editId && Number(form.advancePayment) > 0) {
-      await supabase.from('job_payments').insert([{
-        job_id: jobId,
-        amount: Number(form.advancePayment),
-        payment_type: form.cashSale ? 'Full Payment (Cash Sale)' : 'Advance',
-        payment_date: form.jobDate ? new Date(form.jobDate).toISOString().split('T')[0] : today,
-      }]);
+    if (!form.editId) {
+      if (form.cashSale && Number(form.price) > 0) {
+        await supabase.from('job_payments').insert([{
+          job_id: jobId,
+          amount: Number(form.price),
+          payment_type: 'Full Payment (Cash Sale)',
+          payment_date: form.jobDate ? new Date(form.jobDate).toISOString().split('T')[0] : today,
+        }]);
+      } else if (Number(form.advancePayment) > 0) {
+        await supabase.from('job_payments').insert([{
+          job_id: jobId,
+          amount: Number(form.advancePayment),
+          payment_type: 'Advance',
+          payment_date: form.jobDate ? new Date(form.jobDate).toISOString().split('T')[0] : today,
+        }]);
+      }
     }
 
     for (const part of selectedParts) {
