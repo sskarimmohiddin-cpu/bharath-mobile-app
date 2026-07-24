@@ -21,6 +21,7 @@ const JobCard = ({ job, jobParts, onEdit, onDelete, onMarkDelivered, onCollectBa
       <div style={{ fontSize: 13, color: '#555', marginTop: 2 }}>{job.complaint}</div>
       <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>📞 {job.phone}</div>
       {job.staff_name && <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 2 }}>👤 Booked by: {job.staff_name}</div>}
+      {job.referred_by && <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 2 }}>🔗 Referred by: {job.referred_by}</div>}
       {job.device_password && (
         <div style={{ fontSize: 12, color: '#e65100', marginTop: 4, background: '#fff3e0', display: 'inline-block', padding: '2px 8px', borderRadius: 6 }}>
           🔒 Password: {job.device_password}
