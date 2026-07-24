@@ -114,6 +114,7 @@ const Customers = ({ jobs, jobParts }) => {
                   <div style={{ fontSize: 12, color: '#555' }}>{job.device_model}</div>
                   <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>{job.complaint}</div>
                   {partsCost > 0 && <div style={{ fontSize: 11, color: '#e65100', marginTop: 2 }}>Parts: Rs.{partsCost}</div>}
+                  {job.referred_by && <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 2 }}>👤 Referred by: {job.referred_by}</div>}
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 11, color: '#999' }}>{job.created_at ? fmtDate(job.created_at.split('T')[0]) : ''}</div>
